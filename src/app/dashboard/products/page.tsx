@@ -2,18 +2,32 @@ import Link from "next/link";
 import Heading from "@/components/dashboard/Heading";
 import ProductsTable from "@/components/products/products-table";
 import { Button } from "@/components/ui/button";
-import { Product } from "@/types";
+import { api } from "@/trpc/server";
+import type { Product } from "@/types";
 
-const ProductsPage = () => {
+const ProductsPage = async () => {
+  // const products = await api.product.getallProducts();
   const data: Product[] = [
     {
       id: "product_1",
       name: "Product 1",
-      price: 100,
-      inventory: "60 for 4 variants",
+      description: "Product 1 description",
+      variants: [
+        {
+          stock: 10,
+          size: "S",
+          color: "RED",
+          price: 100,
+          discount: 0,
+        },
+      ],
+      categoryId: "fasdf",
       status: "ACTIVE",
+      isFeatured: true,
+      allowOrderWhenEmpty: true,
       createdAt: new Date(),
     },
+    // inventory: "60 for 4 variants",
   ];
   return (
     <>

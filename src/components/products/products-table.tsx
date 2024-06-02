@@ -52,12 +52,18 @@ export const columns: ColumnDef<Product>[] = [
     ),
   },
   {
-    accessorKey: "inventory",
+    accessorKey: "Quantity",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Inventory" />
+      <DataTableColumnHeader column={column} title="Quantity" />
     ),
     cell: ({ row }) => {
-      return <Badge variant="outline">{row.original.inventory}</Badge>;
+      return (
+        <Badge variant="outline">
+          {/* {row.original.variants} */}
+          {/* for {row.original.variants.length} variants */}
+          variants
+        </Badge>
+      );
     },
   },
   {

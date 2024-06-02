@@ -1,47 +1,24 @@
 import { ProductForm } from "@/components/products/product-form";
+import { Product } from "@/types";
+import { db } from "@/server/db";
 
 interface ProductIdPageProps {
   params: { productId: string };
 }
 
-type Prod = {
-  id: string;
-  name: string;
-  price: number;
-  description: string;
-  variants: {
-    size: "S" | "M" | "L" | "XL" | "XXL";
-    stock: number;
-    price: number;
-  }[];
-  category: string;
-  inventory: number;
-  status: "archived" | "drafted" | "published";
-  createdAt: number;
-};
-
-const ProductIdPage = ({ params: { productId } }: ProductIdPageProps) => {
-  const product: Prod = {
-    id: productId,
-    name: "Product name",
-    description: "Produdejfkshdfad",
-    variants: [
-      {
-        stock: 10,
-        price: 320,
-        size: "L",
-      },
-    ],
-    category: "electronics",
-    price: 123,
-    status: "drafted",
-    inventory: 10,
-    createdAt: new Date().getUTCFullYear(),
-  };
-  console.log(productId);
+const ProductIdPage = async ({ params: { productId } }: ProductIdPageProps) => {
+  const product = await db.product.findFirst({
+    where: {
+      id: productId,
+    },
+    include: {
+      variants: true,
+      Category: true,
+    },
+  });
   return (
     <div className="flex flex-col gap-8">
-      <ProductForm initialData={product} />
+      <ProductForm initialData={product as Product | null} />
     </div>
   );
 };

@@ -62,8 +62,8 @@ model Store {
 
     products   Product[]  @relation("StoreToProducts")
     categories Category[] @relation("StoreToCategories")
-    sizes      Size[]     @relation("StoreToSizes")
-    colors     Color[]    @relation("StoreToColors")
+    // sizes      Size[]     @relation("StoreToSizes")
+    // colors     Color[]    @relation("StoreToColors")
     medias     Media[]    @relation("StoreToMedias")
     orders     Order[]    @relation("StoreToOrders")
 
@@ -87,16 +87,32 @@ enum PRODUCT_STATUS {
     ARCHIVED
 }
 
+model Category {
+    id        String    @id @default(cuid())
+    name      String
+    storeId   String
+    Store     Store     @relation("StoreToCategories", fields: [storeId], references: [id])
+    products  Product[] @relation("CategoryToProducts")
+    imageUrl  String?
+    media     Media?    @relation(fields: [imageUrl], references: [url])
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+
+    @@index([storeId])
+}
+
 model Product {
     id                  String         @id @default(cuid())
     name                String
     description         String         @db.Text
-    price               Float
-    discount            Float?
+    // quantity            Int
+    isFeatured          Boolean        @default(false)
     allowOrderWhenEmpty Boolean        @default(true)
     status              PRODUCT_STATUS @default(ACTIVE)
     storeId             String
     Store               Store          @relation("StoreToProducts", fields: [storeId], references: [id])
+    Category            Category?      @relation("CategoryToProducts", fields: [categoryId], references: [id])
+    categoryId          String?
     orderId             String?
     orders              Order?         @relation(fields: [orderId], references: [id])
     medias              Media[]        @relation("ProductToMedias")
@@ -109,62 +125,72 @@ model Product {
     @@index([storeId, orderId])
 }
 
-model Category {
-    id        String   @id @default(cuid())
-    name      String
-    storeId   String?
-    Store     Store?   @relation("StoreToCategories", fields: [storeId], references: [id])
-    mediaId   String
-    media     Media    @relation(fields: [mediaId], references: [id])
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+enum SIZES {
+    S
+    M
+    L
+    XL
+    XXL
+}
 
-    @@index([storeId])
+enum COLORS {
+    RED
+    BLUE
+    GREEN
+    WHITE
+    BLACK
+    ORANGE
+    GRAY
 }
 
 model Variant {
-    id        String   @id @default(cuid())
+    id        String   @id @unique @default(cuid())
     productId String?
     Product   Product? @relation("ProductToVariants", fields: [productId], references: [id])
 
-    stock   Int //Stock for that specific variant
-    price   Float
-    sizeId  String
-    size    Size   @relation("SizesToVariant", fields: [sizeId], references: [id])
-    colorId String
-    colors  Color  @relation("ColorsToVariant", fields: [colorId], references: [id])
+    stock    Int //Stock for that specific variant
+    price    Float
+    discount Float?
+    size     SIZES
+    color    COLORS
+    // sizeId  String
+    // size    Size   @relation("SizesToVariant", fields: [sizeId], references: [id])
+    // colorId String
+    // colors  Color  @relation("ColorsToVariant", fields: [colorId], references: [id])
 
     images Media[]
+
+    @@index([productId])
 }
 
-model Size {
-    id       String    @id @default(cuid())
-    name     String //like medium,large
-    value    String //like M,L,SM
-    storeId  String?
-    Store    Store?    @relation("StoreToSizes", fields: [storeId], references: [id])
-    variants Variant[] @relation("SizesToVariant")
+// model Size {
+//     id       String    @id @default(cuid())
+//     name     String //like medium,large
+//     value    String //like M,L,SM
+//     storeId  String?
+//     Store    Store?    @relation("StoreToSizes", fields: [storeId], references: [id])
+//     variants Variant[] @relation("SizesToVariant")
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+//     createdAt DateTime @default(now())
+//     updatedAt DateTime @updatedAt
 
-    @@index([storeId])
-}
+//     @@index([storeId])
+// }
 
-model Color {
-    id      String  @id @default(cuid())
-    name    String
-    value   String
-    storeId String?
-    Store   Store?  @relation("StoreToColors", fields: [storeId], references: [id])
+// model Color {
+//     id      String  @id @default(cuid())
+//     name    String
+//     value   String
+//     storeId String?
+//     Store   Store?  @relation("StoreToColors", fields: [storeId], references: [id])
 
-    variants Variant[] @relation("ColorsToVariant")
+//     variants Variant[] @relation("ColorsToVariant")
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+//     createdAt DateTime @default(now())
+//     updatedAt DateTime @updatedAt
 
-    @@index([storeId])
-}
+//     @@index([storeId])
+// }
 
 enum ORDER_STATUS {
     DRAFT

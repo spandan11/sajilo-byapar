@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { signIn, useSession } from "next-auth/react";
+import { EyeClosedIcon, EyeOpenIcon } from "@radix-ui/react-icons";
 
 import {
   Form,
@@ -20,14 +21,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 import { LoginFormSchema, LoginFormSchemaType } from "@/schemas/auth.schema";
-import { useToast } from "@/components/ui/use-toast";
 
 const SignInPage = () => {
-  const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { status } = useSession();
-  const [isPending, startTransition] = useTransition();
+  const [view, setView] = useState(false);
 
   const form = useForm<LoginFormSchemaType>({
     resolver: zodResolver(LoginFormSchema),
@@ -66,7 +64,7 @@ const SignInPage = () => {
                 <FormControl>
                   <Input
                     placeholder="johndoe@gmail.com"
-                    disabled={isPending}
+                    disabled={form.formState.isSubmitting}
                     {...field}
                   />
                 </FormControl>
@@ -83,11 +81,32 @@ const SignInPage = () => {
                   <FormMessage />
                 </div>
                 <FormControl>
-                  <Input
-                    placeholder="********"
-                    disabled={isPending}
-                    {...field}
-                  />
+                  <div className="relative">
+                    <Input
+                      placeholder="********"
+                      disabled={form.formState.isSubmitting}
+                      {...field}
+                      type={view ? "text" : "password"}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1.5 transition-all"
+                      asChild
+                    >
+                      {view ? (
+                        <EyeOpenIcon
+                          className="h-6 w-6 cursor-pointer p-1 text-foreground transition"
+                          onClick={() => setView((prev) => !prev)}
+                        />
+                      ) : (
+                        <EyeClosedIcon
+                          className="h-6 w-6 cursor-pointer p-1 text-foreground transition"
+                          onClick={() => setView((prev) => !prev)}
+                        />
+                      )}
+                    </Button>
+                  </div>
                 </FormControl>
               </FormItem>
             )}
@@ -102,12 +121,12 @@ const SignInPage = () => {
         <Link href="/auth/sign-up" className="underline">
           Sign up
         </Link>
-        <Link
+        {/* <Link
           href="/auth/forgot-password"
           className="ml-auto inline-block text-sm underline"
         >
           Forgot your password?
-        </Link>
+        </Link> */}
       </div>
     </div>
   );

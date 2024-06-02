@@ -3,6 +3,8 @@ import {
   PRODUCT_STATUS,
   ORDER_STATUS,
   PAYMENT_STATUS,
+  SIZES,
+  COLORS,
 } from "@prisma/client";
 
 export interface User {
@@ -13,12 +15,31 @@ export interface User {
 }
 
 export interface Product {
-  id: string;
+  id?: string;
   name: string;
-  price: number;
-  inventory: string;
+  // price: number;
+  // discount?: number;
+  description: string;
+  isFeatured?: boolean;
+  allowOrderWhenEmpty: boolean;
+  variants: {
+    variantId?: string;
+    size: SIZES;
+    color: COLORS;
+    stock: number;
+    price: number;
+    discount?: number;
+  }[];
+  // TODO: Image add schema fields
+  categoryId?: string;
   status: PRODUCT_STATUS;
-  createdAt: Date;
+  createdAt?: Date;
+}
+
+export interface Category {
+  id?: string;
+  name: string;
+  imageUrl?: string;
 }
 
 export interface Order {

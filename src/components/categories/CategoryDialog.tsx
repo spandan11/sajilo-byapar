@@ -1,9 +1,9 @@
 "use client";
 
-import { FC, ReactNode } from "react";
+import { FC, ReactNode, useState } from "react";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Loader2 } from "lucide-react";
 
 import {
@@ -28,29 +28,22 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import type { Category } from "@/app/dashboard/categories/page";
+import { useToast } from "@/components/ui/use-toast";
+import { UploadButton, useUploadThing } from "@/lib/uploadthing";
 
-const categoryFormSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  imageUrl: z.string().min(1, "Image is required"),
-});
-
-type CategoryFormSchemaType = z.infer<typeof categoryFormSchema>;
+import {
+  categoryFormSchema,
+  CategoryFormSchemaType,
+} from "@/schemas/category.schema";
+import type { Category } from "@/types";
+import { api } from "@/trpc/react";
 
 interface CategoryDialogProps {
   initialData: Category | null;
@@ -58,18 +51,37 @@ interface CategoryDialogProps {
 }
 
 const CategoryDialog: FC<CategoryDialogProps> = ({ initialData, trigger }) => {
+  const router = useRouter();
+  const { isUploading } = useUploadThing("imageUploader");
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const { mutate: createCategory, isPending: isPendingCreate } =
+    api.category.createCategory.useMutation();
+  const { mutate: updateCategory, isPending: isPendingUpdate } =
+    api.category.updateCategory.useMutation();
   const form = useForm<CategoryFormSchemaType>({
     resolver: zodResolver(categoryFormSchema),
     defaultValues: initialData || {},
   });
 
   function onSubmit(values: CategoryFormSchemaType) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
     console.log(values);
+    initialData?.id
+      ? updateCategory({
+          categoryFormSchema: values,
+          categoryId: initialData.id,
+        })
+      : createCategory({ name: values.name, imageUrl: values.imageUrl });
+    form.reset();
+    router.refresh();
+    setOpen(false);
+    toast({
+      title: `Category ${initialData?.id ? "Edited" : "Created"} successfully`,
+      description: "Please refresh the page to see the new category",
+    });
   }
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -89,12 +101,12 @@ const CategoryDialog: FC<CategoryDialogProps> = ({ initialData, trigger }) => {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between flex-row">
-                    <FormLabel>Full Name</FormLabel>
+                  <div className="flex flex-row items-center justify-between">
+                    <FormLabel>Category Name</FormLabel>
                     <FormMessage />
                   </div>
                   <FormControl>
-                    <Input placeholder="john doe..." {...field} />
+                    <Input placeholder="urban..." {...field} />
                   </FormControl>
                 </FormItem>
               )}
@@ -104,21 +116,37 @@ const CategoryDialog: FC<CategoryDialogProps> = ({ initialData, trigger }) => {
               name="imageUrl"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between flex-row">
+                  <div className="flex flex-row items-center justify-between">
                     <FormLabel>Image</FormLabel>
                     <FormMessage />
                   </div>
                   <FormControl>
-                    <Input placeholder="your image" {...field} />
+                    <UploadButton
+                      {...field}
+                      endpoint="imageUploader"
+                      onClientUploadComplete={(res) => {
+                        form.setValue("imageUrl", res[0]?.url);
+                      }}
+                      onUploadError={(error: Error) => {
+                        toast({
+                          title: "Error uploading image",
+                          description: error.message,
+                        });
+                      }}
+                    />
                   </FormControl>
                 </FormItem>
               )}
             />
-            <Button disabled={form.formState.isSubmitting} type="submit">
+            <Button
+              disabled={isPendingCreate || isPendingUpdate || isUploading}
+              type="submit"
+            >
               {initialData ? "Edit Category" : "Add Category"}
-              {form.formState.isSubmitting && (
-                <Loader2 className="p-1 w-8 h-8 text-muted-foreground animate-spin ml-1" />
-              )}
+              {isPendingCreate ||
+                (isPendingUpdate && (
+                  <Loader2 className="ml-1 h-8 w-8 animate-spin p-1 text-white" />
+                ))}
             </Button>
           </form>
         </Form>

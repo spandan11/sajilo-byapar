@@ -1,3 +1,8 @@
+"use client";
+
+import { signOut } from "next-auth/react";
+import { CircleUserIcon, LogOut, Settings } from "lucide-react";
+
 import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
@@ -6,7 +11,6 @@ import {
   DropdownMenuContent,
   DropdownMenu,
 } from "@/components/ui/dropdown-menu";
-import { CircleUserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const UserAvatar = () => {
@@ -21,10 +25,18 @@ const UserAvatar = () => {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Settings</DropdownMenuItem>
-        <DropdownMenuItem>Support</DropdownMenuItem>
+        <DropdownMenuItem className="flex cursor-pointer items-center gap-2">
+          <Settings className="h-5 w-5" />
+          <span>Settings</span>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Logout</DropdownMenuItem>
+        <DropdownMenuItem
+          className="flex cursor-pointer items-center gap-2"
+          onClick={() => signOut()}
+        >
+          <LogOut className="h-5 w-5" />
+          <span>Logout</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

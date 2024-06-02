@@ -90,7 +90,7 @@ const UserDialog: FC<UserDialogProps> = ({ initialData, trigger }) => {
               name="fullName"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between flex-row">
+                  <div className="flex flex-row items-center justify-between">
                     <FormLabel>Full Name</FormLabel>
                     <FormMessage />
                   </div>
@@ -105,7 +105,7 @@ const UserDialog: FC<UserDialogProps> = ({ initialData, trigger }) => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between flex-row">
+                  <div className="flex flex-row items-center justify-between">
                     <FormLabel>Email</FormLabel>
                     <FormMessage />
                   </div>
@@ -120,7 +120,7 @@ const UserDialog: FC<UserDialogProps> = ({ initialData, trigger }) => {
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between flex-row">
+                  <div className="flex flex-row items-center justify-between">
                     <FormLabel>Role</FormLabel>
                     <FormMessage />
                   </div>
@@ -132,10 +132,11 @@ const UserDialog: FC<UserDialogProps> = ({ initialData, trigger }) => {
                       <SelectTrigger>
                         <SelectValue placeholder="Select a role" />
                       </SelectTrigger>
-                      {/* <Input placeholder="john doe..." {...field} /> */}
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="OWNER">Owner</SelectItem>
+                      <SelectItem value="OWNER" disabled>
+                        Owner
+                      </SelectItem>
                       <SelectItem value="MANAGER">Manager</SelectItem>
                       <SelectItem value="WORKER">Worker</SelectItem>
                     </SelectContent>
@@ -146,7 +147,7 @@ const UserDialog: FC<UserDialogProps> = ({ initialData, trigger }) => {
             <Button disabled={form.formState.isSubmitting} type="submit">
               {initialData ? "Edit" : "Add"}
               {form.formState.isSubmitting && (
-                <Loader2 className="p-1 w-8 h-8 text-muted-foreground animate-spin ml-1" />
+                <Loader2 className="ml-1 h-8 w-8 animate-spin p-1 text-muted-foreground" />
               )}
             </Button>
           </form>

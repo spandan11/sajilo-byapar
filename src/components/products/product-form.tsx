@@ -2,11 +2,13 @@
 
 import React, { FC } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Upload, PlusCircle } from "lucide-react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { Upload, PlusCircle, Check, BadgeCheck } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { TrashIcon } from "@radix-ui/react-icons";
+
 import {
   Card,
   CardContent,
@@ -39,67 +41,146 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Product } from "@/app/dashboard/products/page";
-import { TrashIcon } from "@radix-ui/react-icons";
+import { colorOptions } from "@/constants/product-constants";
+import { useToast } from "@/components/ui/use-toast";
+import type { Product } from "@/types";
 
-const productFormSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
-  variants: z.array(
-    z.object({
-      size: z.enum(["S", "M", "L", "XL", "XXL"]),
-      stock: z.number().positive("Stock quantity is required"),
-      price: z.number().positive("Price is required"),
-    })
-  ),
-  category: z.string().min(1, "Category is required"),
-  status: z.enum(["ARCHIVED", "DRAFTED", "ACTIVE"]),
-});
-
-type ProductFormSchemaType = z.infer<typeof productFormSchema>;
+import {
+  productFormSchema,
+  ProductFormSchemaType,
+} from "@/schemas/product.schema";
+import { api } from "@/trpc/react";
+import { cn } from "@/lib/utils";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 interface ProductFormProps {
   initialData: Product | null;
 }
 
 export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
+  const router = useRouter();
+  const { toast } = useToast();
+  const { data: allCategories } = api.category.getallCategories.useQuery();
+  const { mutate: createProduct, isPending: isPendingCreate } =
+    api.product.createProduct.useMutation();
+  const { mutate: updateProduct, isPending: isPendingUpdate } =
+    api.product.updateProduct.useMutation();
   const form = useForm<ProductFormSchemaType>({
     resolver: zodResolver(productFormSchema),
-    defaultValues: initialData || {},
+    defaultValues: initialData || {
+      // variants: [
+      //   // {
+      //   //   size: "S",
+      //   //   color: "BLACK",
+      //   //   stock: 20,
+      //   //   price: 50,
+      //   //   discount: 30,
+      //   // },
+      //   // {
+      //   //   size: "S",
+      //   //   color: "RED",
+      //   //   stock: 20,
+      //   //   price: 50,
+      //   //   discount: 30,
+      //   // },
+      //   // {
+      //   //   size: "S",
+      //   //   color: "RED",
+      //   //   stock: 20,
+      //   //   price: 50,
+      //   //   discount: 30,
+      //   // },
+      // ],
+      allowOrderWhenEmpty: true,
+      // name: "",
+      // description: "",
+      // category: "",
+      // price: 0,
+      // quantity: 0,
+      // discount: 0,
+      // status: "DRAFTED",
+      // isFeatured: false,
+      // createdAt: "21st May",
+      // variants: [
+      //   {
+      //     size: "S",
+      //     stock: 0,
+      //     // price: 0,
+      //   },
+      //   {
+      //     size: "M",
+      //     stock: 0,
+      //     // price: 0,
+      //   },
+      //   {
+      //     size: "L",
+      //     stock: 0,
+      //     // price: 0,
+      //   },
+      // ],
+    },
   });
 
+  console.log(initialData);
+
+  console.log(form.getValues("variants"));
+
   function onSubmit(values: ProductFormSchemaType) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+    // console.log(
+    //   "values and variants",
+    //   values.variants.map((variant) => variant.variantId),
+    // );
+    console.log(form.getValues("variants"));
+    values.variants = form.getValues("variants");
+
+    initialData?.id
+      ? updateProduct({
+          productFormSchema: {
+            ...values,
+            variants: form.getValues("variants").map((variant) => ({
+              ...variant,
+              variantId: variant.variantId, // Ensure variantId is included
+            })),
+          },
+          productId: initialData.id,
+        })
+      : createProduct(values);
+    form.reset();
+    router.refresh();
+    toast({
+      title: `Product ${initialData?.id ? "Edited" : "Created"} successfully`,
+      description: "Please refresh the page to see the new product",
+    });
   }
+
   return (
     <>
       <div className="flex items-center justify-end gap-4">
         <Button type="button" variant="outline">
           Discard
         </Button>
-        <Button
+        <LoadingButton
+          loading={isPendingCreate || isPendingUpdate}
           type="submit"
           onClick={async () => {
             await form.handleSubmit(onSubmit)();
           }}
         >
-          Save Product
-        </Button>
+          {initialData?.id ? "Edit Product" : "Save Product"}
+        </LoadingButton>
       </div>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          className="grid grid-cols-1 gap-8 lg:grid-cols-3"
         >
-          <div className="col-span-1 md:col-span-2 flex flex-col gap-8">
+          <div className="col-span-1 flex flex-col gap-8 lg:col-span-2">
             {/* Product name & description part */}
             <Card>
               <CardHeader>
@@ -116,7 +197,7 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <div className="flex items-center justify-between flex-row">
+                          <div className="flex flex-row items-center justify-between">
                             <FormLabel>Product Name</FormLabel>
                             <FormMessage />
                           </div>
@@ -136,7 +217,7 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <div className="flex items-center justify-between flex-row">
+                          <div className="flex flex-row items-center justify-between">
                             <FormLabel>Product Description</FormLabel>
                             <FormMessage />
                           </div>
@@ -154,169 +235,7 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                 </div>
               </CardContent>
             </Card>
-            {/* Prices with variants table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Stock</CardTitle>
-                <CardDescription>
-                  Fill each stock variant with size, available quantity and
-                  price
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">Size</TableHead>
-                      <TableHead>Stock</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead> </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody className="w-full">
-                    <AnimatePresence>
-                      {form?.watch("variants")?.map((_, index) => {
-                        return (
-                          <TableRow key={index}>
-                            <TableCell>
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{
-                                  opacity: { duration: 0.2 },
-                                  height: { duration: 0.2 },
-                                }}
-                              >
-                                <FormField
-                                  control={form.control}
-                                  name={`variants.${index}.size`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <ToggleGroup
-                                          type="single"
-                                          variant="outline"
-                                          {...field}
-                                        >
-                                          <ToggleGroupItem value="S">
-                                            S
-                                          </ToggleGroupItem>
-                                          <ToggleGroupItem value="M">
-                                            M
-                                          </ToggleGroupItem>
-                                          <ToggleGroupItem value="L">
-                                            L
-                                          </ToggleGroupItem>
-                                        </ToggleGroup>
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </motion.div>
-                            </TableCell>
-                            <TableCell>
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{
-                                  opacity: { duration: 0.2 },
-                                  height: { duration: 0.2 },
-                                }}
-                              >
-                                <FormField
-                                  control={form.control}
-                                  name={`variants.${index}.stock`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input {...field} />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </motion.div>
-                            </TableCell>
-                            <TableCell>
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{
-                                  opacity: { duration: 0.2 },
-                                  height: { duration: 0.2 },
-                                }}
-                              >
-                                <FormField
-                                  control={form.control}
-                                  name={`variants.${index}.price`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input {...field} />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </motion.div>
-                            </TableCell>
-                            <TableCell>
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{
-                                  opacity: { duration: 0.2 },
-                                  height: { duration: 0.2 },
-                                }}
-                              >
-                                <Label htmlFor="price-1" className="sr-only">
-                                  Delete
-                                </Label>
-                                <TrashIcon
-                                  onClick={() => {
-                                    form.setValue(
-                                      "variants",
-                                      form
-                                        .getValues("variants")
-                                        .filter((_, i) => i !== index)
-                                    );
-                                  }}
-                                  className="p-1 h-8 w-8 stroke stroke-red-500 stroke-[0.5] text-red-400 hover:text-red-500 cursor-pointer bg-slate-200/30 hover:bg-slate-200/40 rounded-lg"
-                                />
-                              </motion.div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </AnimatePresence>
-                  </TableBody>
-                </Table>
-              </CardContent>
-              <CardFooter className="justify-center border-t p-4">
-                <Button
-                  onClick={() => {
-                    form.setValue("variants", [
-                      ...form.watch("variants"),
-                      {
-                        stock: 0,
-                        price: 0,
-                        size: "S",
-                      },
-                    ]);
-                  }}
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="gap-1"
-                >
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  Add Variant
-                </Button>
-              </CardFooter>
-            </Card>
-            <div className="grid gird-cols-1 md:grid-cols-2 gap-8">
+            <div className="gird-cols-1 grid gap-8 md:grid-cols-2">
               {/* Product Category Card */}
               <Card>
                 <CardHeader>
@@ -327,7 +246,7 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                   <div className="grid gap-3">
                     <FormField
                       control={form.control}
-                      name="category"
+                      name="categoryId"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Category</FormLabel>
@@ -337,20 +256,28 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                           >
                             <FormControl>
                               <SelectTrigger
-                                id="category"
+                                id="categoryId"
                                 aria-label="Select category"
                               >
                                 <SelectValue placeholder="Select category" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="clothing">Clothing</SelectItem>
+                              {allCategories?.map((category) => (
+                                <SelectItem
+                                  key={category.id}
+                                  value={category.id}
+                                >
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                              {/* <SelectItem value="clothing">Clothing</SelectItem>
                               <SelectItem value="electronics">
                                 Electronics
                               </SelectItem>
                               <SelectItem value="accessories">
                                 Accessories
-                              </SelectItem>
+                              </SelectItem> */}
                             </SelectContent>
                           </Select>
                         </FormItem>
@@ -403,31 +330,55 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="drafted">Draft</SelectItem>
-                              <SelectItem value="published">Active</SelectItem>
-                              <SelectItem value="archived">Archive</SelectItem>
+                              <SelectItem value="DRAFTED">Draft</SelectItem>
+                              <SelectItem value="ACTIVE">Active</SelectItem>
+                              <SelectItem value="ARCHIVED">Archive</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
                       )}
                     />
-                    {/* <Select>
-                      <SelectTrigger id="status" aria-label="Select status">
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="drafted">Draft</SelectItem>
-                        <SelectItem value="published">Active</SelectItem>
-                        <SelectItem value="archived">Archive</SelectItem>
-                      </SelectContent>
-                    </Select> */}
                   </div>
-                  {/* </div> */}
                 </CardContent>
               </Card>
             </div>
+            <div className="w-full">
+              {/* Feature Product button */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Feature Product</CardTitle>
+                  <CardDescription>
+                    Make this product featured on the homepage.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="isFeatured"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Feature this product</FormLabel>
+                          <FormDescription>
+                            featured products will be shown on the homepage.
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+            {/* variants table was here */}
           </div>
-          <div className="col-span-1 gap-8 flex flex-col">
+          <div className="col-span-1 flex flex-col gap-8">
+            {/* Image Uploading section */}
             <Card className="overflow-hidden">
               <CardHeader>
                 <CardTitle>Product Images</CardTitle>
@@ -472,56 +423,357 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                 </div>
               </CardContent>
             </Card>
-            {/* Feature Product button */}
+            {/* allowOrderWhenEmpty button */}
             <Card>
               <CardHeader>
-                <CardTitle>Feature Product</CardTitle>
+                <CardTitle>Allow Order When Empty</CardTitle>
                 <CardDescription>
-                  Make this product featured on the homepage.
+                  Allow order for this product when it is not available in
+                  stock.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button size="sm" variant="secondary">
-                  Feature Product
-                </Button>
+                <FormField
+                  control={form.control}
+                  name="allowOrderWhenEmpty"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Allow Order when empty</FormLabel>
+                        <FormDescription>
+                          You can allow order for this product when it is not
+                          available in stock.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
               </CardContent>
+            </Card>
+          </div>
+          <div className="col-span-3 w-full">
+            {/* Prices with variants table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Stock</CardTitle>
+                <CardDescription>
+                  Fill each stock variant with size, available quantity and
+                  price
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">Size</TableHead>
+                      <TableHead>Color</TableHead>
+                      <TableHead>Stock</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Discount</TableHead>
+                      <TableHead> </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="w-full">
+                    <AnimatePresence>
+                      {form?.watch("variants")?.map((_, index) => {
+                        return (
+                          <TableRow key={index}>
+                            {/* Size section */}
+                            <TableCell>
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{
+                                  opacity: { duration: 0.2 },
+                                  height: { duration: 0.2 },
+                                }}
+                              >
+                                <FormField
+                                  control={form.control}
+                                  name={`variants.${index}.size`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <ToggleGroup
+                                          type="single"
+                                          variant="outline"
+                                          {...field}
+                                          value={field.value}
+                                          onValueChange={field.onChange}
+                                        >
+                                          <ToggleGroupItem value="S">
+                                            S
+                                          </ToggleGroupItem>
+                                          <ToggleGroupItem value="M">
+                                            M
+                                          </ToggleGroupItem>
+                                          <ToggleGroupItem value="L">
+                                            L
+                                          </ToggleGroupItem>
+                                          <ToggleGroupItem value="XL">
+                                            XL
+                                          </ToggleGroupItem>
+                                          <ToggleGroupItem value="XXL">
+                                            XXL
+                                          </ToggleGroupItem>
+                                        </ToggleGroup>
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              </motion.div>
+                            </TableCell>
+                            {/* Color Section */}
+                            <TableCell>
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{
+                                  opacity: { duration: 0.2 },
+                                  height: { duration: 0.2 },
+                                }}
+                              >
+                                <FormField
+                                  control={form.control}
+                                  name={`variants.${index}.color`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <ToggleGroup
+                                          type="single"
+                                          variant="outline"
+                                          {...field}
+                                          value={field.value}
+                                          onValueChange={field.onChange}
+                                        >
+                                          {colorOptions.map((option) => (
+                                            <ToggleGroupItem
+                                              key={option.value}
+                                              value={option.value}
+                                              asChild
+                                            >
+                                              <Button
+                                                variant="outline"
+                                                className={cn(
+                                                  "flex h-8 w-8 items-center justify-center rounded-full p-0 ring-0",
+                                                  {
+                                                    [option.backgroundColor]:
+                                                      option.value,
+                                                    [option.ring]:
+                                                      field.value ===
+                                                      option.value,
+                                                  },
+                                                )}
+                                              >
+                                                <Check
+                                                  className={cn(
+                                                    "h-4 w-4 opacity-0",
+                                                    {
+                                                      "opacity-1 text-gray-700":
+                                                        field.value ===
+                                                        option.value,
+                                                    },
+                                                  )}
+                                                />
+                                              </Button>
+                                            </ToggleGroupItem>
+                                          ))}
+                                          {/* <ToggleGroupItem value="RED" asChild>
+                                            <Button
+                                              variant="outline"
+                                              className="h-8 w-8 rounded-full bg-red-500 hover:ring-1 hover:ring-black"
+                                            />
+                                          </ToggleGroupItem>
+                                          <ToggleGroupItem
+                                            value="GREEN"
+                                            asChild
+                                          >
+                                            <Button
+                                              variant="outline"
+                                              className="h-8 w-8 rounded-full bg-green-500"
+                                            />
+                                          </ToggleGroupItem>
+                                          <ToggleGroupItem value="BLUE" asChild>
+                                            <Button
+                                              variant="outline"
+                                              className="h-8 w-8 rounded-full bg-blue-500"
+                                            />
+                                          </ToggleGroupItem>
+                                          <ToggleGroupItem
+                                            value="WHITE"
+                                            asChild
+                                          >
+                                            <Button
+                                              variant="outline"
+                                              className="h-8 w-8 rounded-full bg-white"
+                                            />
+                                          </ToggleGroupItem>
+                                          <ToggleGroupItem
+                                            value="BLACK"
+                                            asChild
+                                          >
+                                            <Button
+                                              variant="outline"
+                                              className="h-8 w-8 rounded-full bg-black"
+                                            />
+                                          </ToggleGroupItem>
+                                          <ToggleGroupItem
+                                            value="ORANGE"
+                                            asChild
+                                          >
+                                            <Button
+                                              variant="outline"
+                                              className="h-8 w-8 rounded-full bg-orange-500"
+                                            />
+                                          </ToggleGroupItem> */}
+                                        </ToggleGroup>
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              </motion.div>
+                            </TableCell>
+                            {/* Stock Section */}
+                            <TableCell>
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{
+                                  opacity: { duration: 0.2 },
+                                  height: { duration: 0.2 },
+                                }}
+                              >
+                                <FormField
+                                  control={form.control}
+                                  name={`variants.${index}.stock`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input {...field} />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              </motion.div>
+                            </TableCell>
+                            {/* Price section */}
+                            <TableCell>
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{
+                                  opacity: { duration: 0.2 },
+                                  height: { duration: 0.2 },
+                                }}
+                              >
+                                <FormField
+                                  control={form.control}
+                                  name={`variants.${index}.price`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input {...field} />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              </motion.div>
+                            </TableCell>
+                            {/* Discount section */}
+                            <TableCell>
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{
+                                  opacity: { duration: 0.2 },
+                                  height: { duration: 0.2 },
+                                }}
+                              >
+                                <FormField
+                                  control={form.control}
+                                  name={`variants.${index}.discount`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input {...field} />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              </motion.div>
+                            </TableCell>
+                            {/* Options */}
+                            <TableCell>
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{
+                                  opacity: { duration: 0.2 },
+                                  height: { duration: 0.2 },
+                                }}
+                              >
+                                <Label htmlFor="price-1" className="sr-only">
+                                  Delete
+                                </Label>
+                                <TrashIcon
+                                  onClick={() => {
+                                    form.setValue(
+                                      "variants",
+                                      form
+                                        .getValues("variants")
+                                        .filter((_, i) => i !== index),
+                                    );
+                                  }}
+                                  className="stroke h-8 w-8 cursor-pointer rounded-lg bg-slate-200/30 stroke-red-500 stroke-[0.5] p-1 text-red-400 hover:bg-slate-200/40 hover:text-red-500"
+                                />
+                              </motion.div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </TableBody>
+                </Table>
+              </CardContent>
+              <CardFooter className="justify-center border-t p-4">
+                <Button
+                  onClick={() => {
+                    form.setValue("variants", [
+                      ...form.watch("variants"),
+                      {
+                        size: "S",
+                        color: "RED",
+                        stock: 0,
+                        price: 0,
+                        discount: 0,
+                      },
+                    ]);
+                  }}
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="gap-1"
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  Add Variant
+                </Button>
+              </CardFooter>
             </Card>
           </div>
         </form>
       </Form>
     </>
-  );
-};
-
-const SingleTableRow = () => {
-  return (
-    <TableRow>
-      <TableCell>
-        <ToggleGroup type="single" defaultValue="s" variant="outline">
-          <ToggleGroupItem value="s">S</ToggleGroupItem>
-          <ToggleGroupItem value="m">M</ToggleGroupItem>
-          <ToggleGroupItem value="l">L</ToggleGroupItem>
-        </ToggleGroup>
-      </TableCell>
-      {/* <TableCell className="font-semibold">GGPC-001</TableCell> */}
-      <TableCell>
-        <Label htmlFor="stock-1" className="sr-only">
-          Stock
-        </Label>
-        <Input id="stock-1" type="number" defaultValue="100" />
-      </TableCell>
-      <TableCell>
-        <Label htmlFor="price-1" className="sr-only">
-          Price
-        </Label>
-        <Input id="price-1" type="number" defaultValue="99.99" />
-      </TableCell>
-      <TableCell>
-        <Label htmlFor="price-1" className="sr-only">
-          Delete
-        </Label>
-        <TrashIcon className="p-1 h-8 w-8 stroke stroke-red-500 stroke-[0.5] text-red-400 hover:text-red-500 cursor-pointer bg-slate-200/30 hover:bg-slate-200/40 rounded-lg" />
-      </TableCell>
-    </TableRow>
   );
 };
