@@ -53,6 +53,30 @@ export const categoryRouter = createTRPCRouter({
       }
       return category;
     }),
+  deleteCategory: protectedProcedure
+    .input(z.object({ categoryId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const { categoryId } = input;
+      const category = await ctx.db.category.findUnique({
+        where: {
+          id: categoryId,
+          storeId: ctx.session.user.storeId,
+        },
+      });
+      if (!category) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Category not found",
+        });
+      }
+      const deletedCategory = await ctx.db.category.delete({
+        where: {
+          id: categoryId,
+          storeId: ctx.session.user.storeId,
+        },
+      });
+      return deletedCategory;
+    }),
 });
 //   create: protectedProcedure
 //     .input(z.object({ name: z.string().min(1) }))

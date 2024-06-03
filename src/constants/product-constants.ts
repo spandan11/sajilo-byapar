@@ -1,4 +1,4 @@
-export const colorOptions = [
+export const stockColorOptions = [
   {
     label: "Red",
     value: "RED",
@@ -34,5 +34,43 @@ export const colorOptions = [
     value: "ORANGE",
     ring: "ring-2 ring-orange-500",
     backgroundColor: "bg-orange-500 hover:bg-orange-500",
+  },
+];
+
+export const stockSizeOptions = [
+  {
+    label: "S",
+    value: "S",
+  },
+  {
+    label: "M",
+    value: "M",
+  },
+  {
+    label: "L",
+    value: "L",
+  },
+  {
+    label: "XL",
+    value: "XL",
+  },
+  {
+    label: "2XL",
+    value: "XXL",
+  },
+];
+
+export const ProductStatusOptions = [
+  {
+    label: "Drafted",
+    value: "DRAFTED",
+  },
+  {
+    label: "Active",
+    value: "ACTIVE",
+  },
+  {
+    label: "Archive",
+    value: "ARCHIVED",
   },
 ];

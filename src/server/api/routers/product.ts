@@ -115,24 +115,28 @@ export const productRouter = createTRPCRouter({
         productId,
       } = input;
 
-      console.log(variants);
-
       // Fetch existing variants
       const existingVariants = await db.variant.findMany({
         where: { productId: productId },
       });
 
       // Determine variant IDs to delete
-      const inputVariantIds = variants.map((variant) => variant.variantId);
+      const inputVariantIds = variants
+        .map((variant) => variant.id)
+        .filter((id) => id);
       const variantIdsToDelete = existingVariants
         .filter((variant) => !inputVariantIds.includes(variant.id))
         .map((variant) => variant.id);
 
-      // Perform upsert operations
-      const upsertOperations = variants.map((variant) => ({
-        where: { id: variant.variantId },
+      // Separate existing and new variants
+      const existingVariantsOps = variants.filter((variant) => variant.id); // filtering out the variants that has id init sended from frontend... aako variant ma id vako ra navako (to create or check it exist in db)
+      const newVariantsOps = variants.filter((variant) => !variant.id); //filtering out the new variants without id
+
+      // Perform upsert operations for existing variants
+      const upsertOperations = existingVariantsOps.map((variant) => ({
+        where: { id: variant.id, productId },
         create: {
-          productId: productId,
+          productId,
           size: variant.size,
           color: variant.color,
           stock: variant.stock,
@@ -148,9 +152,24 @@ export const productRouter = createTRPCRouter({
         },
       }));
 
+      // Perform create operations for new variants
+      const createOperations = newVariantsOps.map((variant) => ({
+        productId,
+        size: variant.size,
+        color: variant.color,
+        stock: variant.stock,
+        price: variant.price,
+        discount: variant.discount,
+      }));
+
       // Execute upsert operations
       await Promise.all(
         upsertOperations.map((operation) => db.variant.upsert(operation)),
+      );
+
+      // Execute create operations
+      await Promise.all(
+        createOperations.map((variant) => db.variant.create({ data: variant })),
       );
 
       // Delete missing variants
@@ -172,45 +191,28 @@ export const productRouter = createTRPCRouter({
           categoryId,
         },
       });
-
-      // const updatedProduct = await db.product.update({
-      //   where: {
-      //     id: productId,
-      //   },
-      //   data: {
-      //     name,
-      //     description,
-      //     variants: {
-      //       upsert: variants.map((variant) => ({
-      //         where: {
-      //           id: variant.variantId, // Ensure this is the unique field
-      //         },
-      //         create: {
-      //           size: variant.size,
-      //           color: variant.color,
-      //           stock: variant.stock,
-      //           price: variant.price,
-      //           discount: variant.discount,
-      //         },
-      //         update: {
-      //           size: variant.size,
-      //           color: variant.color,
-      //           stock: variant.stock,
-      //           price: variant.price,
-      //           discount: variant.discount,
-      //         },
-      //       })),
-      //     },
-      //     storeId: session.user.storeId,
-      //     isFeatured,
-      //     status,
-      //     categoryId,
-      //   },
-      // });
-      console.log("----------------------------------------------");
-      console.log(updatedProduct);
-      console.log("----------------------------------------------");
       return updatedProduct;
+    }),
+  deleteProduct: protectedProcedure
+    .input(z.object({ productId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const { productId } = input;
+      const product = await ctx.db.product.findFirst({
+        where: {
+          id: productId,
+          storeId: ctx.session.user.storeId,
+        },
+      });
+      if (!product) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      const deletedProduct = await ctx.db.product.delete({
+        where: {
+          id: productId,
+          storeId: ctx.session.user.storeId,
+        },
+      });
+      return deletedProduct;
     }),
 });
 //   create: protectedProcedure

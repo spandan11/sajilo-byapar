@@ -19,6 +19,7 @@ enum USER_ROLE {
     OWNER
     MANAGER
     WORKER
+    CUSTOMER
 }
 
 model User {
@@ -29,11 +30,12 @@ model User {
     phoneNo    String       @unique
     address    String?
     isVerified Boolean      @default(false)
-    role       USER_ROLE    @default(OWNER)
+    role       USER_ROLE    @default(CUSTOMER)
     Invitation Invitation[] @relation("InvitedBy")
     // Store       Store[]
     storeId    String?
     Store      Store?       @relation(fields: [storeId], references: [id])
+    Order      Order[]      @relation("UserToOrders")
 
     @@unique([email, phoneNo])
 }
@@ -47,11 +49,17 @@ model Invitation {
     invitedById String?
 }
 
+enum Plan {
+    FREE
+    PRO
+}
+
 model Store {
     id          String  @id @default(cuid())
     name        String  @unique
     description String?
     ownerId     String  @unique
+    plan        Plan    @default(FREE)
     storeLogoId String?
     storeLogo   Media?  @relation("StoreToStoreLogo", fields: [storeLogoId], references: [id])
     storeSlogan String?
@@ -94,7 +102,7 @@ model Category {
     Store     Store     @relation("StoreToCategories", fields: [storeId], references: [id])
     products  Product[] @relation("CategoryToProducts")
     imageUrl  String?
-    media     Media?    @relation(fields: [imageUrl], references: [url])
+    media     Media?    @relation("CategoryToMedias", fields: [imageUrl], references: [url])
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
 
@@ -105,7 +113,6 @@ model Product {
     id                  String         @id @default(cuid())
     name                String
     description         String         @db.Text
-    // quantity            Int
     isFeatured          Boolean        @default(false)
     allowOrderWhenEmpty Boolean        @default(true)
     status              PRODUCT_STATUS @default(ACTIVE)
@@ -144,56 +151,22 @@ enum COLORS {
 }
 
 model Variant {
-    id        String   @id @unique @default(cuid())
+    id        String   @id @default(cuid())
     productId String?
-    Product   Product? @relation("ProductToVariants", fields: [productId], references: [id])
+    Product   Product? @relation("ProductToVariants", fields: [productId], references: [id], onDelete: Cascade)
 
     stock    Int //Stock for that specific variant
     price    Float
     discount Float?
     size     SIZES
     color    COLORS
-    // sizeId  String
-    // size    Size   @relation("SizesToVariant", fields: [sizeId], references: [id])
-    // colorId String
-    // colors  Color  @relation("ColorsToVariant", fields: [colorId], references: [id])
 
     images Media[]
 
     @@index([productId])
 }
 
-// model Size {
-//     id       String    @id @default(cuid())
-//     name     String //like medium,large
-//     value    String //like M,L,SM
-//     storeId  String?
-//     Store    Store?    @relation("StoreToSizes", fields: [storeId], references: [id])
-//     variants Variant[] @relation("SizesToVariant")
-
-//     createdAt DateTime @default(now())
-//     updatedAt DateTime @updatedAt
-
-//     @@index([storeId])
-// }
-
-// model Color {
-//     id      String  @id @default(cuid())
-//     name    String
-//     value   String
-//     storeId String?
-//     Store   Store?  @relation("StoreToColors", fields: [storeId], references: [id])
-
-//     variants Variant[] @relation("ColorsToVariant")
-
-//     createdAt DateTime @default(now())
-//     updatedAt DateTime @updatedAt
-
-//     @@index([storeId])
-// }
-
 enum ORDER_STATUS {
-    DRAFT
     PENDING
     PROCESSING
     DISPATCHED
@@ -210,17 +183,36 @@ enum PAYMENT_STATUS {
 
 model Order {
     id            String         @id @default(cuid())
-    total         Float
+    amount        Float
     paymentStatus PAYMENT_STATUS @default(UNPAID)
-    orderStatus   ORDER_STATUS   @default(DRAFT) // Can be enum: CREATED, PROCESSING, COMPLETED, CANCELED, etc.
+    orderStatus   ORDER_STATUS   @default(PENDING) // Can be enum: CREATED, PROCESSING, COMPLETED, CANCELED, etc.
     storeId       String
     store         Store          @relation("StoreToOrders", fields: [storeId], references: [id])
+    customerId    String?
+    customer      User?          @relation("UserToOrders", fields: [customerId], references: [id])
     products      Product[]
     Shipment      Shipment[]
+    Transaction   Transaction[]  @relation("OrderToTransactions")
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
 
     @@index([storeId])
+}
+
+model Transaction {
+    id            String         @id @default(cuid())
+    orderId       String
+    order         Order          @relation("OrderToTransactions", fields: [orderId], references: [id])
+    amount        Float
+    currency      String
+    paymentMethod String //Added field to specify the payment method (e.g., credit card, paypal)
+    status        PAYMENT_STATUS @default(UNPAID)
+    // transactionId  String? // Unique identifier from payment gateway
+    // paymentGateway String? // Payment gateway used (e.g., Stripe, PayPal)
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
+
+    @@index([orderId])
 }
 
 enum SHIPMENT_STATUS {
@@ -230,19 +222,23 @@ enum SHIPMENT_STATUS {
 }
 
 model Shipment {
-    id      String @id @default(cuid())
-    orderId String
-    order   Order  @relation(fields: [orderId], references: [id])
-    status  String // Can be enum: PENDING, SHIPPED, DELIVERED, etc.
-    // Add more fields for tracking information, delivery addresses, etc.
-}
+    id                String          @id @default(cuid())
+    orderId           String
+    order             Order           @relation(fields: [orderId], references: [id])
+    status            SHIPMENT_STATUS @default(PENDING)
+    trackingNumber    String? // Optional field for tracking number
+    deliveryAddress   String // Delivery address information
+    carrier           String // Added field to specify the carrier (e.g., FedEx, UPS)
+    estimatedDelivery DateTime? // Estimated delivery date
+    actualDelivery    DateTime? // Actual delivery date
+    shippingMethod    String? // e.g., standard, express
+    shippingCost      Float? // Cost of shipping
+    shippedAt         DateTime? // Date when the shipment was shipped
+    createdAt         DateTime        @default(now())
+    updatedAt         DateTime        @updatedAt
 
-// enum UploadStatus {
-//     PENDING
-//     PROCESSING
-//     FAILED
-//     SUCCESS
-// }
+    @@index([orderId])
+}
 
 model Media {
     id        String     @id @default(cuid())
@@ -253,12 +249,13 @@ model Media {
     Store     Store      @relation("StoreToMedias", fields: [storeId], references: [id])
     productId String?
     Product   Product?   @relation("ProductToMedias", fields: [productId], references: [id])
-    createdAt DateTime   @default(now())
-    updatedAt DateTime   @updatedAt
-    Variant   Variant?   @relation(fields: [variantId], references: [id])
     variantId String?
-    Category  Category[]
+    Variant   Variant?   @relation(fields: [variantId], references: [id])
+    Category  Category[] @relation("CategoryToMedias")
     Stores    Store[]    @relation("StoreToStoreLogo")
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
     @@index([storeId, productId])
 }

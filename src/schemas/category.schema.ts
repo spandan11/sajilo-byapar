@@ -1,4 +1,4 @@
-import { Category } from "@/types";
+import type { Category } from "@/types";
 import { ZodType, z } from "zod";
 
 export const categoryFormSchema: ZodType<Category> = z.object({

@@ -23,7 +23,7 @@ export interface Product {
   isFeatured?: boolean;
   allowOrderWhenEmpty: boolean;
   variants: {
-    variantId?: string;
+    id?: string;
     size: SIZES;
     color: COLORS;
     stock: number;
@@ -44,9 +44,9 @@ export interface Category {
 
 export interface Order {
   id: string;
-  customerName: string;
+  customerId: string;
   quantity: number;
-  totalPrice: number;
+  amount: number;
   paymentStatus: PAYMENT_STATUS;
   orderStatus: ORDER_STATUS;
   createdAt: number;

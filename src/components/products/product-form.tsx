@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
-import { Upload, PlusCircle, Check, BadgeCheck } from "lucide-react";
+import { Upload, PlusCircle, Check } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { TrashIcon } from "@radix-ui/react-icons";
 
@@ -47,7 +47,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { colorOptions } from "@/constants/product-constants";
+import {
+  stockColorOptions,
+  stockSizeOptions,
+  ProductStatusOptions,
+} from "@/constants/product-constants";
 import { useToast } from "@/components/ui/use-toast";
 import type { Product } from "@/types";
 
@@ -68,95 +72,68 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
   const { toast } = useToast();
   const { data: allCategories } = api.category.getallCategories.useQuery();
   const { mutate: createProduct, isPending: isPendingCreate } =
-    api.product.createProduct.useMutation();
+    api.product.createProduct.useMutation({
+      onSuccess: () => {
+        toast({
+          title: `Product created successfully`,
+          description: "Please refresh the page to see the new product",
+        });
+        router.push("/dashboard/products");
+      },
+      onError: (error) => {
+        toast({
+          title: "Error creating product",
+          description: error.message,
+        });
+      },
+    });
   const { mutate: updateProduct, isPending: isPendingUpdate } =
-    api.product.updateProduct.useMutation();
+    api.product.updateProduct.useMutation({
+      onSuccess: () => {
+        toast({
+          title: `Product updated successfully`,
+          description: "Please refresh the page to see the new product",
+        });
+        router.push("/dashboard/products");
+      },
+      onError: (error) => {
+        console.log(error.message);
+        toast({
+          title: "Error updating product",
+          description: error.message,
+        });
+      },
+    });
   const form = useForm<ProductFormSchemaType>({
     resolver: zodResolver(productFormSchema),
     defaultValues: initialData || {
-      // variants: [
-      //   // {
-      //   //   size: "S",
-      //   //   color: "BLACK",
-      //   //   stock: 20,
-      //   //   price: 50,
-      //   //   discount: 30,
-      //   // },
-      //   // {
-      //   //   size: "S",
-      //   //   color: "RED",
-      //   //   stock: 20,
-      //   //   price: 50,
-      //   //   discount: 30,
-      //   // },
-      //   // {
-      //   //   size: "S",
-      //   //   color: "RED",
-      //   //   stock: 20,
-      //   //   price: 50,
-      //   //   discount: 30,
-      //   // },
-      // ],
       allowOrderWhenEmpty: true,
-      // name: "",
-      // description: "",
-      // category: "",
-      // price: 0,
-      // quantity: 0,
-      // discount: 0,
-      // status: "DRAFTED",
-      // isFeatured: false,
-      // createdAt: "21st May",
-      // variants: [
-      //   {
-      //     size: "S",
-      //     stock: 0,
-      //     // price: 0,
-      //   },
-      //   {
-      //     size: "M",
-      //     stock: 0,
-      //     // price: 0,
-      //   },
-      //   {
-      //     size: "L",
-      //     stock: 0,
-      //     // price: 0,
-      //   },
-      // ],
     },
   });
 
-  console.log(initialData);
-
-  console.log(form.getValues("variants"));
+  const {
+    fields: variantFields,
+    append: appendVariant,
+    remove: removeVariant,
+  } = useFieldArray({
+    control: form.control,
+    name: "variants",
+  });
 
   function onSubmit(values: ProductFormSchemaType) {
-    // console.log(
-    //   "values and variants",
-    //   values.variants.map((variant) => variant.variantId),
-    // );
-    console.log(form.getValues("variants"));
-    values.variants = form.getValues("variants");
-
     initialData?.id
       ? updateProduct({
           productFormSchema: {
             ...values,
-            variants: form.getValues("variants").map((variant) => ({
+            variants: values.variants.map((variant) => ({
               ...variant,
-              variantId: variant.variantId, // Ensure variantId is included
+              variantId: variant.id,
             })),
           },
           productId: initialData.id,
         })
       : createProduct(values);
     form.reset();
-    router.refresh();
-    toast({
-      title: `Product ${initialData?.id ? "Edited" : "Created"} successfully`,
-      description: "Please refresh the page to see the new product",
-    });
   }
 
   return (
@@ -271,36 +248,12 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                                   {category.name}
                                 </SelectItem>
                               ))}
-                              {/* <SelectItem value="clothing">Clothing</SelectItem>
-                              <SelectItem value="electronics">
-                                Electronics
-                              </SelectItem>
-                              <SelectItem value="accessories">
-                                Accessories
-                              </SelectItem> */}
                             </SelectContent>
                           </Select>
                         </FormItem>
                       )}
                     />
                   </div>
-                  {/* <div className="grid gap-3">
-                    <Label htmlFor="subcategory">Subcategory (optional)</Label>
-                    <Select>
-                      <SelectTrigger
-                        id="subcategory"
-                        aria-label="Select subcategory"
-                      >
-                        <SelectValue placeholder="Select subcategory" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="t-shirts">T-Shirts</SelectItem>
-                        <SelectItem value="hoodies">Hoodies</SelectItem>
-                        <SelectItem value="sweatshirts">Sweatshirts</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div> */}
-                  {/* </div> */}
                 </CardContent>
               </Card>
               {/* Product status select menu */}
@@ -330,9 +283,14 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="DRAFTED">Draft</SelectItem>
-                              <SelectItem value="ACTIVE">Active</SelectItem>
-                              <SelectItem value="ARCHIVED">Archive</SelectItem>
+                              {ProductStatusOptions.map((status) => (
+                                <SelectItem
+                                  key={status.value}
+                                  value={status.value}
+                                >
+                                  {status.label}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </FormItem>
@@ -481,9 +439,9 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                   </TableHeader>
                   <TableBody className="w-full">
                     <AnimatePresence>
-                      {form?.watch("variants")?.map((_, index) => {
+                      {variantFields.map((field, index) => {
                         return (
-                          <TableRow key={index}>
+                          <TableRow key={field.id}>
                             {/* Size section */}
                             <TableCell>
                               <motion.div
@@ -508,21 +466,14 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                                           value={field.value}
                                           onValueChange={field.onChange}
                                         >
-                                          <ToggleGroupItem value="S">
-                                            S
-                                          </ToggleGroupItem>
-                                          <ToggleGroupItem value="M">
-                                            M
-                                          </ToggleGroupItem>
-                                          <ToggleGroupItem value="L">
-                                            L
-                                          </ToggleGroupItem>
-                                          <ToggleGroupItem value="XL">
-                                            XL
-                                          </ToggleGroupItem>
-                                          <ToggleGroupItem value="XXL">
-                                            XXL
-                                          </ToggleGroupItem>
+                                          {stockSizeOptions.map((size) => (
+                                            <ToggleGroupItem
+                                              key={size.value}
+                                              value={size.value}
+                                            >
+                                              {size.label}
+                                            </ToggleGroupItem>
+                                          ))}
                                         </ToggleGroup>
                                       </FormControl>
                                     </FormItem>
@@ -554,7 +505,7 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                                           value={field.value}
                                           onValueChange={field.onChange}
                                         >
-                                          {colorOptions.map((option) => (
+                                          {stockColorOptions.map((option) => (
                                             <ToggleGroupItem
                                               key={option.value}
                                               value={option.value}
@@ -586,54 +537,6 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                                               </Button>
                                             </ToggleGroupItem>
                                           ))}
-                                          {/* <ToggleGroupItem value="RED" asChild>
-                                            <Button
-                                              variant="outline"
-                                              className="h-8 w-8 rounded-full bg-red-500 hover:ring-1 hover:ring-black"
-                                            />
-                                          </ToggleGroupItem>
-                                          <ToggleGroupItem
-                                            value="GREEN"
-                                            asChild
-                                          >
-                                            <Button
-                                              variant="outline"
-                                              className="h-8 w-8 rounded-full bg-green-500"
-                                            />
-                                          </ToggleGroupItem>
-                                          <ToggleGroupItem value="BLUE" asChild>
-                                            <Button
-                                              variant="outline"
-                                              className="h-8 w-8 rounded-full bg-blue-500"
-                                            />
-                                          </ToggleGroupItem>
-                                          <ToggleGroupItem
-                                            value="WHITE"
-                                            asChild
-                                          >
-                                            <Button
-                                              variant="outline"
-                                              className="h-8 w-8 rounded-full bg-white"
-                                            />
-                                          </ToggleGroupItem>
-                                          <ToggleGroupItem
-                                            value="BLACK"
-                                            asChild
-                                          >
-                                            <Button
-                                              variant="outline"
-                                              className="h-8 w-8 rounded-full bg-black"
-                                            />
-                                          </ToggleGroupItem>
-                                          <ToggleGroupItem
-                                            value="ORANGE"
-                                            asChild
-                                          >
-                                            <Button
-                                              variant="outline"
-                                              className="h-8 w-8 rounded-full bg-orange-500"
-                                            />
-                                          </ToggleGroupItem> */}
                                         </ToggleGroup>
                                       </FormControl>
                                     </FormItem>
@@ -728,14 +631,7 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
                                   Delete
                                 </Label>
                                 <TrashIcon
-                                  onClick={() => {
-                                    form.setValue(
-                                      "variants",
-                                      form
-                                        .getValues("variants")
-                                        .filter((_, i) => i !== index),
-                                    );
-                                  }}
+                                  onClick={() => removeVariant(index)}
                                   className="stroke h-8 w-8 cursor-pointer rounded-lg bg-slate-200/30 stroke-red-500 stroke-[0.5] p-1 text-red-400 hover:bg-slate-200/40 hover:text-red-500"
                                 />
                               </motion.div>
@@ -749,18 +645,15 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
               </CardContent>
               <CardFooter className="justify-center border-t p-4">
                 <Button
-                  onClick={() => {
-                    form.setValue("variants", [
-                      ...form.watch("variants"),
-                      {
-                        size: "S",
-                        color: "RED",
-                        stock: 0,
-                        price: 0,
-                        discount: 0,
-                      },
-                    ]);
-                  }}
+                  onClick={() =>
+                    appendVariant({
+                      size: "S",
+                      color: "RED",
+                      stock: 0,
+                      price: 0,
+                      discount: 0,
+                    })
+                  }
                   type="button"
                   size="sm"
                   variant="ghost"

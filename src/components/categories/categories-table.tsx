@@ -7,6 +7,7 @@ import type { Category } from "@/types";
 import { DataTable } from "@/components/ui/data-table";
 import { Pencil2Icon, TrashIcon } from "@radix-ui/react-icons";
 import CategoryDialog, { CategoryDeleteDialog } from "./CategoryDialog";
+import Image from "next/image";
 
 interface UserTableProps {
   data: Category[];
@@ -38,6 +39,18 @@ export const columns: ColumnDef<Category>[] = [
   {
     accessorKey: "imageUrl",
     header: "Image",
+    cell: ({ row }) =>
+      row.original.imageUrl ? (
+        <Image
+          alt="Product image"
+          className="aspect-square h-[24px] w-[24px] rounded-md object-contain p-0"
+          height={24}
+          src={row.original.imageUrl as string}
+          width={24}
+        />
+      ) : (
+        <p className="text-xs">No image</p>
+      ),
   },
   {
     accessorKey: "name",

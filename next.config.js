@@ -11,6 +11,15 @@ const config = {
     },
     typescript:{
         ignoreBuildErrors: true
+    },
+    images:{
+        remotePatterns: [
+            {
+              protocol: 'https',
+              hostname: 'utfs.io',
+            },
+          ],
+      
     }
 };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -16,6 +16,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { MixerHorizontalIcon } from "@radix-ui/react-icons";
+import { RefreshCcw } from "lucide-react";
 
 import {
   Table,
@@ -37,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { DataTableFacetedFilter } from "@/components/ui/data-table-faceted-filters";
 import { ORDER_STATUS, PAYMENT_STATUS, PRODUCT_STATUS } from "@prisma/client";
+import { Skeleton } from "./skeleton";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -48,6 +50,8 @@ export function DataTable<TData, TValue>({
   data,
 }: DataTableProps<TData, TValue>) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [rotate, setRotate] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -57,6 +61,22 @@ export function DataTable<TData, TValue>({
     pageIndex: 0,
     pageSize: 5,
   });
+
+  // let loading = true;
+
+  // const tableData = useMemo(
+  //   () => (loading ? Array(5).fill({}) : data),
+  //   [loading, data],
+  // );
+
+  // const tableColumns = useMemo(
+  //   () =>
+  //     loading
+  //       ? columns.map((column) => ({ ...column, Cell: <Skeleton /> }))
+  //       : columns,
+  //   [loading, columns],
+  // );
+
   const table = useReactTable({
     data,
     columns,
@@ -181,6 +201,22 @@ export function DataTable<TData, TValue>({
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
+          <Button
+            className="ml-auto cursor-pointer p-0"
+            size="icon"
+            variant="outline"
+          >
+            <RefreshCcw
+              className={`h-4 w-4 stroke-2 ${rotate ? "animate-spin" : ""}`}
+              onClick={() => {
+                setRotate(true);
+                router.refresh();
+                setTimeout(() => {
+                  setRotate(false);
+                }, 1000);
+              }}
+            />
+          </Button>
         </div>
       </div>
       <div className="rounded-md border">

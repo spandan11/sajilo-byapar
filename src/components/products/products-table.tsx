@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import { Pencil2Icon, TrashIcon } from "@radix-ui/react-icons";
+import { format } from "date-fns";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -45,23 +46,26 @@ export const columns: ColumnDef<Product>[] = [
       <DataTableColumnHeader column={column} title="Name" />
     ),
   },
-  {
-    accessorKey: "price",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Price" />
-    ),
-  },
+  // {
+  //   accessorKey: "price",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Price" />
+  //   ),
+  // },
   {
     accessorKey: "Quantity",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Quantity" />
     ),
     cell: ({ row }) => {
+      const { variants } = row.original;
+      let totalStock = 0;
+      variants.forEach((variant) => {
+        totalStock += variant.stock;
+      });
       return (
         <Badge variant="outline">
-          {/* {row.original.variants} */}
-          {/* for {row.original.variants.length} variants */}
-          variants
+          {totalStock} for {variants.length} variants
         </Badge>
       );
     },
@@ -83,6 +87,13 @@ export const columns: ColumnDef<Product>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="CreatedAt" />
     ),
+    cell: ({ row }) => {
+      return (
+        <p className="text-sm">
+          {format(new Date(row.original.createdAt as Date), "MMM d, yyyy")}
+        </p>
+      );
+    },
   },
   {
     id: "actions",
