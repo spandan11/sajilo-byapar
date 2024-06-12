@@ -4,101 +4,91 @@ import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 import { ProductFormSchema } from "@/schemas/product.schema";
 import { ProductStatusSchema } from "@/schemas/status.schema";
+import { OrderFormSchema } from "@/schemas/order.schema";
+import { env } from "@/env";
 
-export const productRouter = createTRPCRouter({
-  // checkProduct: protectedProcedure
-  //   .input(z.object({ productId: z.string() }))
-  //   .output(ProductFormSchema)
-  //   .query(async ({ input, ctx }) => {
-  //     const { productId } = input;
-  //     const { db } = ctx;
-  //     const product = await db.product.findFirst({
-  //       where: {
-  //         id: productId,
-  //       },
-  //       include: {
-  //         variants: true,
-  //         Store: {
-  //           include: {
-  //             categories: true,
-  //           },
-  //         },
-  //       },
-  //     });
-  //     if (!product) {
-  //       throw new TRPCError({ code: "NOT_FOUND" });
-  //     }
-
-  //     console.log(product)
-  //     // const data = await db.store.findFirst({
-  //     //   where: {
-  //     //     id: product.storeId,
-  //     //     products: {
-  //     //       some: {
-  //     //         id: productId,
-  //     //       },
-  //     //     },
-  //     //   },
-  //     //   include: {
-  //     //     products: {
-  //     //       select: {
-  //     //         variants: true,
-  //     //       },
-  //     //     },
-  //     //     categories: true,
-  //     //   },
-  //     // });
-  //     if (!data) {
-  //       throw new TRPCError({ code: "NOT_FOUND" });
-  //     }
-  //     return data;
-  //   }),
-  getallProducts: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.product.findMany({
+export const orderRouter = createTRPCRouter({
+  getallOrders: protectedProcedure.query(({ ctx }) => {
+    return ctx.db.order.findMany({
       where: {
         storeId: ctx.session.user.storeId,
       },
       orderBy: {
         createdAt: "desc",
       },
-      include: {
-        variants: true,
-      },
     });
   }),
-  createProduct: protectedProcedure
-    .input(ProductFormSchema)
+  createOrder: protectedProcedure
+    .input(OrderFormSchema)
     .mutation(async ({ ctx, input }) => {
-      const { db, session } = ctx;
-      const { name, description, variants, categoryId, isFeatured, status } =
-        input;
+      const {
+        id,
+        amount,
+        quantity,
+        paymentMethod,
+        paymentStatus,
+        orderStatus,
+        product,
+        createdAt,
+        customerName,
+        customerAddress,
+        discount,
+      } = input;
 
-      const newProduct = await db.product.create({
+      const newOrder = await ctx.db.order.create({
         data: {
-          name,
-          description,
-          variants: {
-            create: variants.map((variant) => ({
-              size: variant.size,
-              color: variant.color,
-              stock: variant.stock,
-              price: variant.price,
-              discount: variant.discount,
-            })),
-          },
-          storeId: session.user.storeId,
-          isFeatured,
-          status,
-          categoryId,
+          storeId: ctx.session.user.storeId,
+          quantity,
+          amount,
+          paymentMethod,
+
+          paymentStatus,
+          orderStatus,
         },
       });
-      return newProduct;
+
+      const newShipment = await ctx.db.shipment.create({
+        data: {
+          orderId: newOrder.id,
+          status: "PENDING",
+          trackingNumber: "123456789",
+          deliveryAddress: "123 Main St",
+          carrier: "UPS",
+          estimatedDelivery: new Date(),
+          actualDelivery: new Date(),
+          shippingMethod: "CASH_ON_DELIVERY",
+          shippingCost: env.SHIPPING_COST,
+          // shippedAt:new Date(),
+        },
+      });
+
+      //   const newProduct = await db.product.create({
+      //     data: {
+      //       name,
+      //       description,
+      //       variants: {
+      //         create: variants.map((variant) => ({
+      //           size: variant.size,
+      //           color: variant.color,
+      //           stock: variant.stock,
+      //           price: variant.price,
+      //           discount: variant.discount,
+      //         })),
+      //       },
+      //       storeId: session.user.storeId,
+      //       isFeatured,
+      //       status,
+      //       categoryId,
+      //     },
+      //   });
+      //   return newProduct;
       // return ctx.db.product.create({
       //   data: {
       //     name: input.name,
       //     createdBy: { connect: { id: ctx.session.user.id } },
       //   },
       // });
+      return {};
     }),
   updateProduct: protectedProcedure
     .input(z.object({ productId: z.string().min(1), ProductFormSchema }))

@@ -26,6 +26,7 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: z.string(),
     UPLOADTHING_SECRET: z.string(),
     UPLOADTHING_APP_ID: z.string(),
+    SHIPPING_COST: z.coerce.number(),
   },
 
   /**
@@ -35,6 +36,7 @@ export const env = createEnv({
    */
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    // NEXT_PUBLIC_SHIPPING_COST: z.coerce.number(),
   },
 
   /**
@@ -50,6 +52,7 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     UPLOADTHING_SECRET: process.env.UPLOADTHING_SECRET,
     UPLOADTHING_APP_ID: process.env.UPLOADTHING_APP_ID,
+    SHIPPING_COST: process.env.SHIPPING_COST,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

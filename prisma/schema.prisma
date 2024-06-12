@@ -23,13 +23,13 @@ enum USER_ROLE {
 }
 
 model User {
-    id         String       @id @default(cuid())
-    fullName   String
-    email      String       @unique
-    password   String
-    phoneNo    String       @unique
-    address    String?
-    isVerified Boolean      @default(false)
+    id       String  @id @default(cuid())
+    fullName String
+    email    String  @unique
+    password String
+    phoneNo  String  @unique
+    address  String?
+
     role       USER_ROLE    @default(CUSTOMER)
     Invitation Invitation[] @relation("InvitedBy")
     // Store       Store[]
@@ -58,53 +58,56 @@ model Store {
     id          String  @id @default(cuid())
     name        String  @unique
     description String?
+    storeSlogan String?
     ownerId     String  @unique
+    isVerified  Boolean @default(false)
     plan        Plan    @default(FREE)
     storeLogoId String?
     storeLogo   Media?  @relation("StoreToStoreLogo", fields: [storeLogoId], references: [id])
-    storeSlogan String?
 
     users User[]
 
     // owner   User?   @relation(fields: [ownerId], references: [id])
 
-    products   Product[]  @relation("StoreToProducts")
-    categories Category[] @relation("StoreToCategories")
+    products      Product[]       @relation("StoreToProducts")
+    categories    Category[]      @relation("StoreToCategories")
     // sizes      Size[]     @relation("StoreToSizes")
     // colors     Color[]    @relation("StoreToColors")
-    medias     Media[]    @relation("StoreToMedias")
-    orders     Order[]    @relation("StoreToOrders")
+    medias        Media[]         @relation("StoreToMedias")
+    orders        Order[]         @relation("StoreToOrders")
+    StoreSettings StoreSettings[] @relation("StoreToSettings")
 
-    createdAt     DateTime        @default(now())
-    updatedAt     DateTime        @updatedAt
-    StoreSettings StoreSettings[]
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 // Store settings schema
 model StoreSettings {
-    id       String @id @default(cuid())
-    storeId  String
-    store    Store  @relation(fields: [storeId], references: [id])
-    timeZone String
-    currency String
+    id           String  @id @default(cuid())
+    storeId      String
+    store        Store   @relation("StoreToSettings", fields: [storeId], references: [id])
+    shippingTime String? //For showing user the shipping time of product 
+    timeZone     String?
+    currency     String?
 }
 
 enum PRODUCT_STATUS {
-    ACTIVE
     DRAFTED
+    ACTIVE
     ARCHIVED
 }
 
 model Category {
-    id        String    @id @default(cuid())
-    name      String
-    storeId   String
-    Store     Store     @relation("StoreToCategories", fields: [storeId], references: [id])
-    products  Product[] @relation("CategoryToProducts")
-    imageUrl  String?
-    media     Media?    @relation("CategoryToMedias", fields: [imageUrl], references: [url])
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
+    id       String    @id @default(cuid())
+    name     String
+    storeId  String
+    Store    Store     @relation("StoreToCategories", fields: [storeId], references: [id])
+    products Product[] @relation("CategoryToProducts")
+    imageUrl String?
+    media    Media?    @relation("CategoryToMedias", fields: [imageUrl], references: [url])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
     @@index([storeId])
 }
@@ -163,7 +166,18 @@ model Variant {
 
     images Media[]
 
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
     @@index([productId])
+}
+
+enum PAYMENT_METHOD {
+    CREDIT_CARD
+    ESEWA
+    KHALTI
+    BANK_TRANSFER
+    CASH_ON_DELIVERY
 }
 
 enum ORDER_STATUS {
@@ -183,9 +197,12 @@ enum PAYMENT_STATUS {
 
 model Order {
     id            String         @id @default(cuid())
+    quantity      Int
     amount        Float
+    discount      Float?
+    paymentMethod PAYMENT_METHOD @default(CASH_ON_DELIVERY)
     paymentStatus PAYMENT_STATUS @default(UNPAID)
-    orderStatus   ORDER_STATUS   @default(PENDING) // Can be enum: CREATED, PROCESSING, COMPLETED, CANCELED, etc.
+    orderStatus   ORDER_STATUS   @default(PENDING)
     storeId       String
     store         Store          @relation("StoreToOrders", fields: [storeId], references: [id])
     customerId    String?
@@ -196,7 +213,7 @@ model Order {
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
 
-    @@index([storeId])
+    @@index([storeId, customerId])
 }
 
 model Transaction {
@@ -233,7 +250,7 @@ model Shipment {
     actualDelivery    DateTime? // Actual delivery date
     shippingMethod    String? // e.g., standard, express
     shippingCost      Float? // Cost of shipping
-    shippedAt         DateTime? // Date when the shipment was shipped
+    // shippedAt         DateTime? // Date when the shipment was shipped
     createdAt         DateTime        @default(now())
     updatedAt         DateTime        @updatedAt
 

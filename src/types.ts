@@ -3,6 +3,7 @@ import {
   PRODUCT_STATUS,
   ORDER_STATUS,
   PAYMENT_STATUS,
+  PAYMENT_METHOD,
   SIZES,
   COLORS,
 } from "@prisma/client";
@@ -43,11 +44,28 @@ export interface Category {
 }
 
 export interface Order {
-  id: string;
-  customerId: string;
-  quantity: number;
+  id?: string;
+  customerName: string;
+  customerAddress: string;
   amount: number;
+  quantity: number;
+  discount?: number;
+  paymentMethod: PAYMENT_METHOD;
   paymentStatus: PAYMENT_STATUS;
   orderStatus: ORDER_STATUS;
-  createdAt: number;
+  product: Product[];
+  createdAt?: Date;
+}
+
+export interface ProductStatus {
+  productId: string;
+  status: PRODUCT_STATUS;
+}
+export interface OrderStatus {
+  orderId: string;
+  status: ORDER_STATUS;
+}
+export interface PaymentStatus {
+  orderId: string;
+  status: PAYMENT_STATUS;
 }

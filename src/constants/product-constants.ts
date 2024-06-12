@@ -60,17 +60,17 @@ export const stockSizeOptions = [
   },
 ];
 
-export const ProductStatusOptions = [
-  {
-    label: "Drafted",
-    value: "DRAFTED",
-  },
-  {
-    label: "Active",
-    value: "ACTIVE",
-  },
-  {
-    label: "Archive",
-    value: "ARCHIVED",
-  },
-];
+// export const ProductStatusOptions = [
+//   {
+//     label: "Drafted",
+//     value: "DRAFTED",
+//   },
+//   {
+//     label: "Active",
+//     value: "ACTIVE",
+//   },
+//   {
+//     label: "Archive",
+//     value: "ARCHIVED",
+//   },
+// ];

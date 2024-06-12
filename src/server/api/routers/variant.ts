@@ -1,11 +1,11 @@
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { categoryFormSchema } from "@/schemas/category.schema";
+import { CategoryFormSchema } from "@/schemas/category.schema";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 export const variantRouter = createTRPCRouter({
   createCategory: protectedProcedure
-    .input(categoryFormSchema)
+    .input(CategoryFormSchema)
     .mutation(async ({ ctx, input }) => {
       const { db, session } = ctx;
       const { name, imageUrl } = input;
@@ -29,10 +29,10 @@ export const variantRouter = createTRPCRouter({
     });
   }),
   updateCategory: protectedProcedure
-    .input(z.object({ categoryId: z.string().min(1), categoryFormSchema }))
+    .input(z.object({ categoryId: z.string().min(1), CategoryFormSchema }))
     .mutation(async ({ ctx, input }) => {
       const {
-        categoryFormSchema: { name, imageUrl },
+        CategoryFormSchema: { name, imageUrl },
         categoryId,
       } = input;
       const category = await ctx.db.category.update({

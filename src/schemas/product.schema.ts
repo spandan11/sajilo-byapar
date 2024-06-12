@@ -1,7 +1,7 @@
 import type { Product } from "@/types";
 import { ZodType, z } from "zod";
 
-export const productFormSchema: ZodType<Product> = z.object({
+export const ProductFormSchema: ZodType<Product> = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   description: z.string().min(1, "Description is required"),
@@ -23,4 +23,4 @@ export const productFormSchema: ZodType<Product> = z.object({
   createdAt: z.date().optional(),
 });
 
-export type ProductFormSchemaType = z.infer<typeof productFormSchema>;
+export type ProductFormSchemaType = z.infer<typeof ProductFormSchema>;

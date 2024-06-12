@@ -1,9 +1,8 @@
 "use client";
 
-import { FC, ReactNode } from "react";
+import { FC, ReactNode, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Loader2 } from "lucide-react";
 
 import {
@@ -41,32 +40,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { Order } from "@/types";
-
-const orderDetailsFormSchema = z.object({
-  customerName: z.string().min(1, "Name is required"),
-  //   quantity: z.number().positive(),
-  quantity: z.coerce.number(),
-
-  //   role: z.enum(["owner", "manager"]),
-});
-
-type OrderDetailsFormSchemaType = z.infer<typeof orderDetailsFormSchema>;
+import { OrderFormSchema, OrderFormSchemaType } from "@/schemas/order.schema";
 
 interface OrderDetailsProps {
   initialData: Order | null;
   trigger: ReactNode;
 }
 
-const OrderDetailsDialog: FC<OrderDetailsProps> = ({
-  initialData,
-  trigger,
-}) => {
-  const form = useForm<OrderDetailsFormSchemaType>({
-    resolver: zodResolver(orderDetailsFormSchema),
+const OrderDialog: FC<OrderDetailsProps> = ({ initialData, trigger }) => {
+  const [edit, setEdit] = useState(false);
+  const form = useForm<OrderFormSchemaType>({
+    resolver: zodResolver(OrderFormSchema),
     defaultValues: initialData || {},
   });
 
-  function onSubmit(values: OrderDetailsFormSchemaType) {
+  function onSubmit(values: OrderFormSchemaType) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     console.log(values);
@@ -77,11 +65,17 @@ const OrderDetailsDialog: FC<OrderDetailsProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {initialData ? "Order Details" : "Create new Order"}
+            {initialData
+              ? edit
+                ? "Edit Order Details"
+                : "Order Details"
+              : "Create new Order"}
           </DialogTitle>
           <DialogDescription>
             {initialData
-              ? "Customers Order details appears here."
+              ? edit
+                ? "Edit customer order details here"
+                : "Customers Order details appears here."
               : "Create a new Order."}
           </DialogDescription>
         </DialogHeader>
@@ -104,7 +98,7 @@ const OrderDetailsDialog: FC<OrderDetailsProps> = ({
             />
             <FormField
               control={form.control}
-              name="quantity"
+              name="amount"
               render={({ field }) => (
                 <FormItem>
                   <div className="flex flex-row items-center justify-between">
@@ -130,4 +124,4 @@ const OrderDetailsDialog: FC<OrderDetailsProps> = ({
   );
 };
 
-export default OrderDetailsDialog;
+export default OrderDialog;

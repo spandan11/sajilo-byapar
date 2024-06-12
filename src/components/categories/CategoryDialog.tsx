@@ -40,7 +40,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { UploadButton, useUploadThing } from "@/lib/uploadthing";
 
 import {
-  categoryFormSchema,
+  CategoryFormSchema,
   CategoryFormSchemaType,
 } from "@/schemas/category.schema";
 import type { Category } from "@/types";
@@ -95,14 +95,14 @@ const CategoryDialog: FC<CategoryDialogProps> = ({ initialData, trigger }) => {
       },
     });
   const form = useForm<CategoryFormSchemaType>({
-    resolver: zodResolver(categoryFormSchema),
+    resolver: zodResolver(CategoryFormSchema),
     defaultValues: initialData || {},
   });
 
   function onSubmit(values: CategoryFormSchemaType) {
     initialData?.id
       ? updateCategory({
-          categoryFormSchema: values,
+          CategoryFormSchema: values,
           categoryId: initialData.id,
         })
       : createCategory({ name: values.name, imageUrl: values.imageUrl });

@@ -47,21 +47,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import {
   stockColorOptions,
   stockSizeOptions,
-  ProductStatusOptions,
 } from "@/constants/product-constants";
+import { ProductStatusOptions } from "@/constants/status-constants";
 import { useToast } from "@/components/ui/use-toast";
 import type { Product } from "@/types";
 
 import {
-  productFormSchema,
+  ProductFormSchema,
   ProductFormSchemaType,
 } from "@/schemas/product.schema";
 import { api } from "@/trpc/react";
 import { cn } from "@/lib/utils";
-import { LoadingButton } from "@/components/ui/loading-button";
 
 interface ProductFormProps {
   initialData: Product | null;
@@ -105,7 +105,7 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
       },
     });
   const form = useForm<ProductFormSchemaType>({
-    resolver: zodResolver(productFormSchema),
+    resolver: zodResolver(ProductFormSchema),
     defaultValues: initialData || {
       allowOrderWhenEmpty: true,
     },
@@ -123,7 +123,7 @@ export const ProductForm: FC<ProductFormProps> = ({ initialData }) => {
   function onSubmit(values: ProductFormSchemaType) {
     initialData?.id
       ? updateProduct({
-          productFormSchema: {
+          ProductFormSchema: {
             ...values,
             variants: values.variants.map((variant) => ({
               ...variant,

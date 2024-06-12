@@ -1,15 +1,15 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { DataTable } from "@/components/ui/data-table";
 import { EyeOpenIcon, TrashIcon } from "@radix-ui/react-icons";
 import OrderDeleteDialog from "@/components/orders/order-delete-dialog";
-import OrderDetailsDialog from "@/components/orders/order-detail-dialog";
+import OrderDialog from "@/components/orders/order-dialog";
 import { Badge } from "@/components/ui/badge";
-import type { Order } from "@/types";
+import EditStatusDialog from "@/components/global/edit-status-dialog";
+import type { Order, PaymentStatus, OrderStatus } from "@/types";
 
 interface UserTableProps {
   data: Order[];
@@ -45,16 +45,45 @@ export const columns: ColumnDef<Order>[] = [
     ),
   },
   {
+    accessorKey: "customerAddress",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Address" />
+    ),
+  },
+  {
     accessorKey: "quantity",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Quantity" />
     ),
+    cell: ({ row }) => {
+      const { product } = row.original;
+      let totalVariants = 0;
+      product.forEach((item) => {
+        totalVariants += item.variants.length;
+      });
+      return (
+        <Badge variant="outline">
+          {product.length} items / {totalVariants} variants
+        </Badge>
+      );
+    },
   },
   {
-    accessorKey: "totalPrice",
+    accessorKey: "amount",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Total Price" />
+      <DataTableColumnHeader column={column} title="Amount" />
     ),
+    cell: ({ row }) => {
+      const { product } = row.original;
+      let totalVariants = 0;
+      let totalPrice = 0;
+      product.forEach((item) => {
+        item.variants.forEach((element) => {
+          totalPrice += element.price;
+        });
+      });
+      return totalPrice;
+    },
   },
   {
     accessorKey: "paymentStatus",
@@ -65,7 +94,22 @@ export const columns: ColumnDef<Order>[] = [
       <DataTableColumnHeader column={column} title="Payment Status" />
     ),
     cell: ({ row }) => {
-      return <Badge variant="outline">{row.original.paymentStatus}</Badge>;
+      return (
+        <EditStatusDialog
+          trigger={
+            <Badge variant="outline" className="cursor-pointer">
+              {row.original.paymentStatus}
+            </Badge>
+          }
+          initialData={
+            {
+              orderId: row.original.id,
+              status: row.original.paymentStatus,
+            } as PaymentStatus
+          }
+          dialogType="payment"
+        />
+      );
     },
   },
   {
@@ -77,7 +121,22 @@ export const columns: ColumnDef<Order>[] = [
       <DataTableColumnHeader column={column} title="Order Status" />
     ),
     cell: ({ row }) => {
-      return <Badge variant="outline">{row.original.orderStatus}</Badge>;
+      return (
+        <EditStatusDialog
+          trigger={
+            <Badge variant="outline" className="cursor-pointer">
+              {row.original.orderStatus}
+            </Badge>
+          }
+          initialData={
+            {
+              orderId: row.original.id,
+              status: row.original.orderStatus,
+            } as OrderStatus
+          }
+          dialogType="order"
+        />
+      );
     },
   },
   {
@@ -87,7 +146,7 @@ export const columns: ColumnDef<Order>[] = [
       const order = row.original;
       return (
         <div className="flex flex-row items-center justify-center gap-4">
-          <OrderDetailsDialog
+          <OrderDialog
             trigger={
               <EyeOpenIcon className="stroke h-8 w-8 cursor-pointer rounded-lg bg-slate-200/30 stroke-green-500 stroke-[0.5] p-1 text-green-400 hover:bg-slate-200/40 hover:text-green-500" />
             }

@@ -1,26 +1,32 @@
-import type { Product } from "@/types";
 import { ZodType, z } from "zod";
+import { ProductFormSchema } from "@/schemas/product.schema";
+import type { Order } from "@/types";
 
-export const orderFormSchema: ZodType<Product> = z.object({
+export const OrderFormSchema: ZodType<Order> = z.object({
   id: z.string().optional(),
-  name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
-  variants: z.array(
-    z.object({
-      id: z.string().optional(),
-      size: z.enum(["S", "M", "L", "XL", "XXL"]),
-      color: z.enum(["RED", "BLUE", "GREEN", "WHITE", "BLACK", "ORANGE"]),
-      stock: z.coerce.number().positive("Stock quantity is required"),
-      price: z.coerce.number().positive("Price must be greater than 0"),
-      discount: z.coerce.number().optional(),
-    }),
-  ),
-  categoryId: z.string().optional(),
-  status: z.enum(["ARCHIVED", "DRAFTED", "ACTIVE"]),
-  isFeatured: z.boolean().optional(),
-  allowOrderWhenEmpty: z.boolean(),
-  // quantity: z.coerce.number().optional(),
+  customerName: z.string(),
+  customerAddress: z.string(),
+  amount: z.number().positive(),
+  quantity: z.number().positive(),
+  discount: z.number().optional(),
+  paymentMethod: z.enum([
+    "CREDIT_CARD",
+    "ESEWA",
+    "KHALTI",
+    "BANK_TRANSFER",
+    "CASH_ON_DELIVERY",
+  ]),
+  paymentStatus: z.enum(["PAID", "UNPAID", "REFUNDED"]),
+  orderStatus: z.enum([
+    "PENDING",
+    "PROCESSING",
+    "DISPATCHED",
+    "DELIVERED",
+    "CANCELLED",
+    "RETURNED",
+  ]),
+  product: z.array(ProductFormSchema),
   createdAt: z.date().optional(),
 });
 
-export type ProductFormSchemaType = z.infer<typeof orderFormSchema>;
+export type OrderFormSchemaType = z.infer<typeof OrderFormSchema>;

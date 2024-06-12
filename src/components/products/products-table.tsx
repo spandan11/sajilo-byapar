@@ -9,9 +9,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { DataTable } from "@/components/ui/data-table";
+
+import EditStatusDialog from "@/components/global/edit-status-dialog";
 import ProductDeleteDialog from "@/components/products/product-delete-dialog";
 
-import type { Product } from "@/types";
+import type { Product, ProductStatus } from "@/types";
 
 interface UserTableProps {
   data: Product[];
@@ -46,12 +48,6 @@ export const columns: ColumnDef<Product>[] = [
       <DataTableColumnHeader column={column} title="Name" />
     ),
   },
-  // {
-  //   accessorKey: "price",
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader column={column} title="Price" />
-  //   ),
-  // },
   {
     accessorKey: "Quantity",
     header: ({ column }) => (
@@ -79,7 +75,22 @@ export const columns: ColumnDef<Product>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => {
-      return <Badge variant="outline">{row.original.status}</Badge>;
+      return (
+        <EditStatusDialog
+          trigger={
+            <Badge variant="outline" className="cursor-pointer">
+              {row.original.status}
+            </Badge>
+          }
+          initialData={
+            {
+              productId: row.original.id,
+              status: row.original.status,
+            } as ProductStatus
+          }
+          dialogType="product"
+        />
+      );
     },
   },
   {
