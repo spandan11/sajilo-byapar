@@ -32,7 +32,7 @@ const HeroSection = () => {
         loop: true,
         //   duration: 3000,
       }}
-      className="h-full w-full"
+      className="h-full w-full pb-5"
       //   onMouseEnter={plugin.current.stop}
       //   onMouseLeave={plugin.current.reset}
     >
@@ -45,7 +45,7 @@ const HeroSection = () => {
                 alt={item.label}
                 width={3480}
                 height={400}
-                className={`aspect-square h-[400px] w-[3480px] rounded-md md:aspect-auto ${loaded ? "blur-none" : "blur-md"}`}
+                className={`aspect-square h-[400px] w-[3480px] rounded-md object-center md:aspect-auto ${loaded ? "blur-none" : "blur-md"}`}
                 onLoad={() => setLoaded(true)}
                 priority
               />

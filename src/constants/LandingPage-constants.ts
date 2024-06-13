@@ -129,4 +129,34 @@ export const Categories = [
     href: "/dashboard/products/1",
     url: "/assets/bags.avif",
   },
+  {
+    label: "Clothing",
+    href: "/dashboard/products/1",
+    url: "/assets/mens-fashion.avif",
+  },
+  {
+    label: "Electronics",
+    href: "/dashboard/products/1",
+    url: "/assets/electronics.jpg",
+  },
+  {
+    label: "Bags",
+    href: "/dashboard/products/1",
+    url: "/assets/bags.avif",
+  },
+  {
+    label: "Clothing",
+    href: "/dashboard/products/1",
+    url: "/assets/mens-fashion.avif",
+  },
+  {
+    label: "Electronics",
+    href: "/dashboard/products/1",
+    url: "/assets/electronics.jpg",
+  },
+  {
+    label: "Bags",
+    href: "/dashboard/products/1",
+    url: "/assets/bags.avif",
+  },
 ];

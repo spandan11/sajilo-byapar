@@ -13,7 +13,7 @@ import Cart from "@/components/home/Cart";
 const Navbar = () => {
   const { data } = useSession();
   return (
-    <header className="sticky top-0 z-50 flex h-14 w-full items-center justify-between gap-4 border-b bg-muted/40 px-4 backdrop-blur-md md:px-10 lg:h-20 lg:px-20">
+    <header className="sticky top-0 z-50 flex h-14 w-full items-center justify-between gap-4 border-b-2 bg-muted px-4 backdrop-blur-md md:px-10 lg:h-20 lg:px-20">
       <SiteLogo />
       {/* <NavigationMenu>
         <NavigationMenuList>
@@ -80,7 +80,7 @@ const Navbar = () => {
         {Routes.map((route) => (
           <Link
             href={route.href}
-            className="text-sm text-muted-foreground hover:text-primary"
+            className="text-base text-muted-foreground hover:text-primary"
             key={route.label}
           >
             {route.label}
@@ -97,7 +97,7 @@ const Navbar = () => {
           <Search className="h-10 w-10 cursor-pointer stroke-2 p-1 text-foreground transition" />
         </Button>
       </div> */}
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-center gap-0 md:gap-2">
         <SearchProductDialog
           trigger={
             <Search className="h-7 w-7 p-1 text-foreground transition" />
@@ -110,8 +110,11 @@ const Navbar = () => {
         </Button>
         <Cart
           trigger={
-            <Button size="icon" variant="ghost">
+            <Button size="icon" variant="ghost" className="relative">
               <ShoppingCart className="h-7 w-7 p-1 text-foreground transition" />
+              <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                {0}
+              </span>
             </Button>
           }
         />

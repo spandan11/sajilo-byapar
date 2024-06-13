@@ -150,7 +150,7 @@ const CategoryDialog: FC<CategoryDialogProps> = ({ initialData, trigger }) => {
                   <FormControl className="mx-auto my-auto h-[300px] w-[300px]">
                     {image ? (
                       <div className="group relative mx-auto my-auto overflow-hidden rounded-lg shadow-lg">
-                        <img
+                        <Image
                           src={image}
                           alt="Product Image"
                           width={400}

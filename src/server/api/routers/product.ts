@@ -1,58 +1,28 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "@/server/api/trpc";
 
 import { ProductFormSchema } from "@/schemas/product.schema";
 import { ProductStatusSchema } from "@/schemas/status.schema";
 
 export const productRouter = createTRPCRouter({
-  // checkProduct: protectedProcedure
-  //   .input(z.object({ productId: z.string() }))
-  //   .output(ProductFormSchema)
-  //   .query(async ({ input, ctx }) => {
-  //     const { productId } = input;
-  //     const { db } = ctx;
-  //     const product = await db.product.findFirst({
-  //       where: {
-  //         id: productId,
-  //       },
-  //       include: {
-  //         variants: true,
-  //         Store: {
-  //           include: {
-  //             categories: true,
-  //           },
-  //         },
-  //       },
-  //     });
-  //     if (!product) {
-  //       throw new TRPCError({ code: "NOT_FOUND" });
-  //     }
-
-  //     console.log(product)
-  //     // const data = await db.store.findFirst({
-  //     //   where: {
-  //     //     id: product.storeId,
-  //     //     products: {
-  //     //       some: {
-  //     //         id: productId,
-  //     //       },
-  //     //     },
-  //     //   },
-  //     //   include: {
-  //     //     products: {
-  //     //       select: {
-  //     //         variants: true,
-  //     //       },
-  //     //     },
-  //     //     categories: true,
-  //     //   },
-  //     // });
-  //     if (!data) {
-  //       throw new TRPCError({ code: "NOT_FOUND" });
-  //     }
-  //     return data;
-  //   }),
+  getTrendingProducts: publicProcedure.query(({ ctx }) => {
+    return ctx.db.product.findMany({
+      where: {
+        isFeatured: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        variants: true,
+      },
+    });
+  }),
   getallProducts: protectedProcedure.query(({ ctx }) => {
     return ctx.db.product.findMany({
       where: {
