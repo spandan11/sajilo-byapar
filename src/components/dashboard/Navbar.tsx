@@ -46,7 +46,7 @@ const DashboardNavbar = () => {
             ))}
           </nav>
           {/* Lower Section */}
-          <Upgrade />
+          {/* <Upgrade /> */}
         </DrawerContent>
       </Drawer>
       <div className="w-full flex-1 justify-center md:hidden">

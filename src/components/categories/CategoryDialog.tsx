@@ -190,10 +190,10 @@ const CategoryDialog: FC<CategoryDialogProps> = ({ initialData, trigger }) => {
               type="submit"
             >
               {initialData ? "Edit Category" : "Create Category"}
-              {isPendingCreate ||
+              {/* {isPendingCreate ||
                 (isPendingUpdate && (
                   <Loader2 className="ml-1 h-8 w-8 animate-spin p-1 text-white" />
-                ))}
+                ))} */}
             </LoadingButton>
           </form>
         </Form>

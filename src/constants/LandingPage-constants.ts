@@ -43,16 +43,16 @@ export const NavItems = [
     href: "/",
   },
   {
-    label: "Jewelery",
-    href: "/jewelry",
+    label: "Men",
+    href: "/men",
   },
   {
-    label: "Collection",
-    href: "/jewelry",
+    label: "Women",
+    href: "/women",
   },
   {
-    label: "About Us",
-    href: "/jewelry",
+    label: "Kids",
+    href: "/kids",
   },
   {
     label: "Blog",
@@ -95,6 +95,21 @@ export const CarouselItems = [
     label: "7",
     href: "/dashboard/products/1",
     url: "/assets/banner-7.jpg",
+  },
+  {
+    label: "8",
+    href: "/dashboard/products/1",
+    url: "/assets/banner-8.jpg",
+  },
+  {
+    label: "9",
+    href: "/dashboard/products/1",
+    url: "/assets/banner-9.jpg",
+  },
+  {
+    label: "10",
+    href: "/dashboard/products/1",
+    url: "/assets/banner-10.jpg",
   },
 ];
 

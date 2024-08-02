@@ -1,7 +1,7 @@
 import "@/styles/globals.css";
 import "@uploadthing/react/styles.css";
 
-import { Figtree } from "next/font/google";
+import { Figtree, Poppins, Roboto_Slab } from "next/font/google";
 
 import { TRPCReactProvider } from "@/trpc/react";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
@@ -11,9 +11,19 @@ import { ourFileRouter } from "@/app/api/uploadthing/core";
 import { AuthSessionProvider, ThemeProvider } from "@/lib/providers";
 import { Toaster } from "@/components/ui/toaster";
 
-const inter = Figtree({
+// const inter = Figtree({
+//   subsets: ["latin"],
+//   variable: "--font-sans",
+// });
+// const robotoSlab = Roboto_Slab({
+//   subsets: ["latin"],
+//   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+//   display: "swap",
+// });
+const poppins = Poppins({
   subsets: ["latin"],
-  variable: "--font-sans",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
 export const metadata = {
@@ -29,7 +39,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`font-sans ${inter.variable}`}>
+      <body className={`font-sans ${poppins.className}`}>
         <TRPCReactProvider>
           <AuthSessionProvider>
             <ThemeProvider

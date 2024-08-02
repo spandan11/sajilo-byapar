@@ -36,6 +36,28 @@ export const productRouter = createTRPCRouter({
       },
     });
   }),
+  // addtoWhishlist: protectedProcedure.mutation(({ ctx, input }) => {
+
+  // }),
+  getProductById: publicProcedure
+    .input(z.object({ productId: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const { productId } = input;
+      const ProductData = await ctx.db.product.findFirst({
+        where: {
+          id: productId,
+        },
+        include: {
+          variants: true,
+          Category: true,
+          Store: true,
+        },
+      });
+      if (!ProductData) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      return ProductData;
+    }),
   createProduct: protectedProcedure
     .input(ProductFormSchema)
     .mutation(async ({ ctx, input }) => {

@@ -13,14 +13,14 @@ const CategoriesMenu = () => {
     <div className="mx-auto flex w-full flex-col items-start justify-between px-4 py-5 md:px-10">
       <SectionHeading heading="Categories" browseHref="/categories" />
       <ScrollArea
-        className="flex h-[235px] w-full flex-row items-center justify-center overflow-hidden whitespace-nowrap"
+        className="flex h-[220px] w-full flex-row items-center justify-center overflow-hidden whitespace-nowrap"
         aria-orientation="horizontal"
       >
-        <div className="flex h-[230px] w-max space-x-2 md:space-x-4">
+        <div className="flex h-[210px] w-max space-x-2 md:space-x-4">
           {Categories.map((category) => (
             <Card
               key={category.label}
-              className="h-[200px] cursor-pointer border-2 border-transparent px-0 py-4 transition hover:border-primary/50 hover:shadow-xl md:px-4"
+              className="h-[200px] cursor-pointer border-2 px-0 py-4 transition  hover:shadow-xl md:px-4"
             >
               <CardContent className="h-[150px] w-[150px]">
                 <Image

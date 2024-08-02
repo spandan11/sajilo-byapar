@@ -64,7 +64,7 @@ const DashboardSidebar = () => {
           </nav>
         </div> */}
         {/* Sidebar lower section */}
-        <Upgrade />
+        {/* <Upgrade /> */}
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import { forwardRef } from "react";
 import Link from "next/link";
 import { Search, ShoppingCart, User2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -13,7 +12,7 @@ import Cart from "@/components/home/Cart";
 const Navbar = () => {
   const { data } = useSession();
   return (
-    <header className="sticky top-0 z-50 flex h-14 w-full items-center justify-between gap-4 border-b-2 bg-muted px-4 backdrop-blur-md md:px-10 lg:h-20 lg:px-20">
+    <header className="sticky top-0 z-50 flex h-14 w-full items-center justify-between gap-4 border-b-2 bg-white px-4 dark:bg-black md:px-10 lg:h-20">
       <SiteLogo />
       {/* <NavigationMenu>
         <NavigationMenuList>
@@ -80,7 +79,7 @@ const Navbar = () => {
         {Routes.map((route) => (
           <Link
             href={route.href}
-            className="text-base text-muted-foreground hover:text-primary"
+            className="text-sm text-muted-foreground hover:text-primary"
             key={route.label}
           >
             {route.label}

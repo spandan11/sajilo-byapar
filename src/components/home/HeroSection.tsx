@@ -39,13 +39,13 @@ const HeroSection = () => {
       <CarouselContent>
         {CarouselItems.map((item, index) => (
           <CarouselItem key={index} className="h-1/2 w-full">
-            <div className="p-4">
+            <div className="pt-1">
               <Image
                 src={item.url}
                 alt={item.label}
                 width={3480}
                 height={400}
-                className={`aspect-square h-[400px] w-[3480px] rounded-md object-center md:aspect-auto ${loaded ? "blur-none" : "blur-md"}`}
+                className={`aspect-square h-[200px] w-[3480px] rounded-md object-center md:aspect-auto md:h-[400px] ${loaded ? "blur-none" : "blur-md"}`}
                 onLoad={() => setLoaded(true)}
                 priority
               />

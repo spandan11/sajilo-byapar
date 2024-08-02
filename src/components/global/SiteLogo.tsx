@@ -13,7 +13,7 @@ const SiteLogo = ({ className }: { className?: string }) => {
     >
       <Package2Icon className="h-6 w-6 text-primary" />
       <p className="">
-        Sajilo <span className="text-lg text-primary">B</span>yapar
+        Sajilo <span className="text-base text-primary md:text-lg">B</span>yapar
       </p>
     </Link>
   );
